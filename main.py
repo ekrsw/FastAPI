@@ -3,7 +3,10 @@ import asyncio
 from db.user import User
 
 async def main():
-    User.add_user("test")
+    await User.create_user("test")
+
+    user = await User.get_user_by_id(1)
+    print(user.username)
 
 if __name__ == "__main__":
     asyncio.run(main())
