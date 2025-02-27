@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Select
-from .database import Database, BaseDatabase, AsyncContextManager
+from .database import BaseDatabase, AsyncContextManager
 
 class User(BaseDatabase):
     __tablename__ = "users"
