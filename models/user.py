@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy import Column, String, Select
-from db.base import BaseDatabase, AsyncContextManager
+from db.base import BaseDatabase
+from db.session import AsyncContextManager
 
 class User(BaseDatabase):
     __tablename__ = "users"
