@@ -1,36 +1,39 @@
 from sqlalchemy import Column, String, Select
-from .database import Database, BaseDatabase
+from .database import Database, BaseDatabase, AsyncContextManager
 
 class User(BaseDatabase):
     __tablename__ = "users"
-    username = Column(String)
-
+    username = Column(String, unique=True, nullable=False)
+    
     @classmethod
     async def create_user(cls, username: str):
-        db = Database()
-        await db.init()
-        session = await db.connect_db()
-        session.add(cls(username=username))
-        await session.commit()
-        await session.close()
+        async with AsyncContextManager() as session:
+            session.add(cls(username=username))
     
     @classmethod
     async def get_all_users(cls):
-        db = Database()
-        await db.init()
-        session = await db.connect_db()
-        result = await session.execute(Select(cls))
-        await session.close()
-        users = result.scalars().all()
-        return users
-    
+        async with AsyncContextManager() as session:
+            result = await session.execute(Select(cls))
+            users = result.scalars().all()
+            return users
+
     @classmethod
     async def get_user_by_id(cls, user_id: int):
-        db = Database()
-        await db.init()
-        session = await db.connect_db()
-        result = await session.execute(Select(cls).where(cls.id == user_id))
-        user = result.scalar_one_or_none()
-        await session.close()
-        return user
-        
+        async with AsyncContextManager() as session:
+            result = await session.execute(Select(cls).where(cls.id == user_id))
+            user = result.scalar_one_or_none()
+            return user
+    
+    @classmethod
+    async def get_user_by_username(cls, username: str):
+        async with AsyncContextManager() as session:
+            result = await session.execute(Select(cls).where(cls.username == username))
+            user = result.scalar_one_or_none()
+            return user
+    
+    @classmethod
+    async def update_user(cls, user_id: int, username: str):
+        async with AsyncContextManager() as session:
+            user = await cls.get_user_by_id(user_id)
+            user.username = username
+            session.add(user)
