@@ -4,6 +4,7 @@ from .database import BaseDatabase, AsyncContextManager
 class User(BaseDatabase):
     __tablename__ = "users"
     username = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
     
     @classmethod
     async def create_user(cls, username: str):
@@ -37,3 +38,9 @@ class User(BaseDatabase):
             user = await cls.get_user_by_id(user_id)
             user.username = username
             session.add(user)
+    
+    @classmethod
+    async def delete_user(cls, user_id: int):
+        async with AsyncContextManager() as session:
+            user = await cls.get_user_by_id(user_id)
+            await session.delete(user)
