@@ -1,10 +1,10 @@
+from fastapi import HTTPException
 from sqlalchemy import Column, String, Select
-from .database import BaseDatabase, AsyncContextManager
+from db.base import BaseDatabase, AsyncContextManager
 
 class User(BaseDatabase):
     __tablename__ = "users"
     username = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
     
     @classmethod
     async def create_user(cls, username: str):
@@ -23,6 +23,8 @@ class User(BaseDatabase):
         async with AsyncContextManager() as session:
             result = await session.execute(Select(cls).where(cls.id == user_id))
             user = result.scalar_one_or_none()
+            if user is None:
+                raise HTTPException(status_code=404, detail="User not found")
             return user
     
     @classmethod
@@ -30,6 +32,8 @@ class User(BaseDatabase):
         async with AsyncContextManager() as session:
             result = await session.execute(Select(cls).where(cls.username == username))
             user = result.scalar_one_or_none()
+            if user is None:
+                raise HTTPException(status_code=404, detail="User not found")
             return user
     
     @classmethod
