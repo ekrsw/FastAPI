@@ -1,4 +1,4 @@
-from .base import Database
+from .database import Database
 
 
 class AsyncContextManager:
