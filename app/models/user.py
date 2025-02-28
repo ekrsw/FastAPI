@@ -11,8 +11,8 @@ pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 class User(BaseDatabase):
     __tablename__ = "users"
     username = Column(String, unique=True, nullable=False)
-    hashed_password = Column(String)
-    is_admin = Column(Boolean, default=False)
+    hashed_password = Column(String, nullable=False)
+    is_admin = Column(Boolean, default=False, nullable=False)
 
     async def valify_password(self, plain_password: str) -> bool:
         """入力されたパスワードがハッシュと一致するかを確かめる"""
@@ -24,7 +24,7 @@ class User(BaseDatabase):
         return pwd_context.hash(plain_password)
     
     @classmethod
-    async def create_user(cls, username: str, plain_password: str, is_admin: bool):
+    async def create_user(cls, username: str, plain_password: Optional[str]=None, is_admin: Optional[bool]=False):
         """ユーザーを作成する"""
         # ユーザーが既に存在する場合はHTTP 400エラーを返す
         async with AsyncContextManager() as session:
@@ -88,7 +88,7 @@ class User(BaseDatabase):
             await session.delete(user)
     
     @classmethod
-    async def update_password(cls, user_id: int, plain_password: str):
+    async def update_password(cls, user_id: int, plain_password: Optional[str]):
         """パスワードを更新する"""
         # ユーザーが存在しない場合はHTTP 404エラーを返す
         async with AsyncContextManager() as session:
