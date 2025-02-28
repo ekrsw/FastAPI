@@ -42,6 +42,7 @@ class User(BaseDatabase):
             result = await session.execute(Select(cls).where(cls.id == user_id))
             user = result.scalar_one_or_none()
             if user is None:
+                # `is_admin`が空欄の場合はHTTP 400エラーを返す
                 raise HTTPException(status_code=404, detail="User not found")
             return user
     
@@ -61,6 +62,8 @@ class User(BaseDatabase):
             user.username = username
             if is_admin is not None:
                 user.is_admin = is_admin
+            else:
+                raise HTTPException(status_code=400, detail="is_admin is required")
             session.add(user)
     
     @classmethod
