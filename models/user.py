@@ -26,6 +26,9 @@ class User(BaseDatabase):
     @classmethod
     async def create_user(cls, username: str, plain_password: str, is_admin: bool):
         async with AsyncContextManager() as session:
+            user = await cls.get_user_by_username(username)
+            if user is not None:
+                raise HTTPException(status_code=400, detail=f"`{username}` already exists")
             hashed_password = await cls.set_password(plain_password)
             session.add(cls(username=username, hashed_password=hashed_password, is_admin=is_admin))
     
