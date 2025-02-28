@@ -18,10 +18,10 @@ class User(BaseDatabase):
         """入力されたパスワードがハッシュと一致するかを確かめる"""
         return pwd_context.verify(plain_password, self.hashed_password)
     
-    @classmethod
-    async def set_password(cls, plain_password: str):
-        """パスワードをハッシュ化して保存する"""
-        cls.hashed_password = pwd_context.hash(plain_password)
+    @staticmethod
+    async def set_password(plain_password: str) -> str:
+        """パスワードをハッシュ化して返す"""
+        return pwd_context.hash(plain_password)
     
     @classmethod
     async def create_user(cls, username: str, plain_password: str, is_admin: bool):
