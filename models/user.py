@@ -25,6 +25,8 @@ class User(BaseDatabase):
     
     @classmethod
     async def create_user(cls, username: str, plain_password: str, is_admin: bool):
+        """ユーザーを作成する"""
+        # ユーザーが既に存在する場合はHTTP 400エラーを返す
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_username(username)
             if user is not None:
@@ -34,6 +36,7 @@ class User(BaseDatabase):
     
     @classmethod
     async def get_all_users(cls):
+        """全てのユーザーを取得する"""
         async with AsyncContextManager() as session:
             result = await session.execute(Select(cls))
             users = result.scalars().all()
@@ -41,16 +44,18 @@ class User(BaseDatabase):
 
     @classmethod
     async def get_user_by_id(cls, user_id: int):
+        """ユーザーIDからユーザーを取得する"""
         async with AsyncContextManager() as session:
+            # `is_admin`が空欄の場合はHTTP 400エラーを返す
             result = await session.execute(Select(cls).where(cls.id == user_id))
             user = result.scalar_one_or_none()
             if user is None:
-                # `is_admin`が空欄の場合はHTTP 400エラーを返す
                 raise HTTPException(status_code=404, detail="User not found")
             return user
     
     @classmethod
     async def get_user_by_username(cls, username: str):
+        """ユーザー名からユーザーを取得する"""
         async with AsyncContextManager() as session:
             result = await session.execute(Select(cls).where(cls.username == username))
             user = result.scalar_one_or_none()
@@ -60,6 +65,8 @@ class User(BaseDatabase):
     
     @classmethod
     async def update_user(cls, user_id: int, username: str, is_admin: Optional[bool]=None):
+        """ユーザー情報を更新する"""
+        # `is_admin`が空欄の場合はHTTP 400エラーを返す
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id)
             user.username = username
@@ -71,14 +78,22 @@ class User(BaseDatabase):
     
     @classmethod
     async def delete_user(cls, user_id: int):
+        """ユーザーを削除する"""
+        # ユーザーが存在しない場合はHTTP 404エラーを返す
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id)
+            if user is None:
+                raise HTTPException(status_code=404, detail="User not found")
             await session.delete(user)
     
     @classmethod
     async def update_password(cls, user_id: int, plain_password: str):
+        """パスワードを更新する"""
+        # ユーザーが存在しない場合はHTTP 404エラーを返す
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id)
+            if user is None:
+                raise HTTPException(status_code=404, detail="User not found")
             hashed_password = await cls.set_password(plain_password)
             user.hashed_password = hashed_password
             session.add(user)
