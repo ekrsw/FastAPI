@@ -28,7 +28,8 @@ class User(BaseDatabase):
         """ユーザーを作成する"""
         # ユーザーが既に存在する場合はHTTP 400エラーを返す
         async with AsyncContextManager() as session:
-            user = await cls.get_user_by_username(username)
+            result = await session.execute(Select(cls).where(cls.username == username))
+            user = result.scalar_one_or_none()
             if user is not None:
                 raise HTTPException(status_code=400, detail=f"`{username}` already exists")
             hashed_password = await cls.set_password(plain_password)
