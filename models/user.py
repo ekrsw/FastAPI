@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from passlib import CryptContext
+from passlib.context import CryptContext
 from sqlalchemy import Boolean, Column, String, Select
 from typing import Optional
 from .base import BaseDatabase
