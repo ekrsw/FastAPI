@@ -1,8 +1,10 @@
 from passlib.context import CryptContext
 from sqlalchemy import Boolean, Column, String, Select
 from typing import Optional
+
 from .base import BaseDatabase
 from db.session import AsyncContextManager
+from schemas.user_schema import UserSchema
 
 
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
@@ -25,9 +27,11 @@ class User(BaseDatabase):
     @classmethod
     async def create_user(cls, username: str, plain_password: Optional[str]=None, is_admin: Optional[bool]=False):
         """ユーザーを作成する"""
+        
         async with AsyncContextManager() as session:
-            hashed_password = await cls.set_password(plain_password)
-            session.add(cls(username=username, hashed_password=hashed_password, is_admin=is_admin))
+            user_schema = UserSchema(username=username, password=plain_password)
+            hashed_password = await cls.set_password(user_schema.plain_password)
+            session.add(cls(username=user_schema.username, hashed_password=hashed_password, is_admin=is_admin))
     
     @classmethod
     async def get_all_users(cls):
