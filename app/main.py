@@ -1,11 +1,16 @@
 import asyncio
-from models.user import User
+from app.models.user import User
+from app.db.database import Database
 
 
 async def main():
+    # データベースの初期化
+    db = Database()
+    await db.init()
+    
     await User.create_user(
         username="test_user",
-        plain_password="initial_password",
+        plain_password="aaaaaaaaa",
         is_admin=False
         )
     await User.update_password(user_id=1, plain_password="test_password")

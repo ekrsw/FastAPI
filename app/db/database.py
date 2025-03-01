@@ -1,8 +1,7 @@
 import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 
 Base = declarative_base()
@@ -28,4 +27,3 @@ class Database:
             expire_on_commit=False
         )
         return async_session()
-

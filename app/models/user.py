@@ -3,8 +3,8 @@ from sqlalchemy import Boolean, Column, String, Select
 from typing import Optional
 
 from .base import BaseDatabase
-from db.session import AsyncContextManager
-from schemas.user_schema import UserSchema
+from app.db.session import AsyncContextManager
+from app.schemas.user_schema import UserSchema
 
 
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
@@ -30,8 +30,10 @@ class User(BaseDatabase):
         
         async with AsyncContextManager() as session:
             user_schema = UserSchema(username=username, password=plain_password)
-            hashed_password = await cls.set_password(user_schema.plain_password)
-            session.add(cls(username=user_schema.username, hashed_password=hashed_password, is_admin=is_admin))
+            hashed_password = await cls.set_password(user_schema.password)
+            new_user = cls(username=user_schema.username, hashed_password=hashed_password, is_admin=is_admin)
+            session.add(new_user)
+            return new_user
     
     @classmethod
     async def get_all_users(cls):
