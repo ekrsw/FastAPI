@@ -27,7 +27,6 @@ class User(BaseDatabase):
     @classmethod
     async def create_user(cls, username: str, plain_password: Optional[str]=None, is_admin: Optional[bool]=False):
         """ユーザーを作成する"""
-        
         async with AsyncContextManager() as session:
             user_schema = UserSchema(username=username, password=plain_password)
             hashed_password = await cls.set_password(user_schema.password)
