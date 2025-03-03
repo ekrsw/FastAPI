@@ -14,7 +14,6 @@ RUN pip install -r requirements.txt
 
 # アプリケーションコードのコピー
 COPY ./app /app/app
-COPY ./alembic.ini /app/alembic.ini
 
 # テストコードのコピー
 COPY ./tests /app/tests
