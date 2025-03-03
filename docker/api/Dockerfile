@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12.9-alpine
 
 # 作業ディレクトリの設定
 WORKDIR /app
@@ -14,9 +14,11 @@ RUN pip install -r requirements.txt
 
 # アプリケーションコードのコピー
 COPY ./app /app/app
+COPY ./alembic.ini /app/alembic.ini
 
 # テストコードのコピー
 COPY ./tests /app/tests
+COPY ./pytest.ini /app/pytest.ini
 
 # Uvicornでアプリケーションを起動
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
