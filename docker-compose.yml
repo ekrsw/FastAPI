@@ -1,0 +1,32 @@
+services:
+  # postgresqlのコンテナ定義
+  db:
+    image: postgres:17.4-alpine
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+  # DB起動までappコンテナの起動を待つための設定
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --username=${DATABASE_USER}"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    # 既存プロジェクトとのポート競合を避けるため、54321に設定。
+    ports:
+      - "${DATABASE_PORT}:5432"
+    # DBの削除を容易にするためにプロジェクト内のディレクトリに保存
+    volumes:
+      - ./docker/db_data:/var/lib/postgresql/db_data
+    networks:
+      - fastapi-network
+
+
+networks:
+  fastapi-network:
+    name: fastapi-network
+    driver: bridge
