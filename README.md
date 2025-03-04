@@ -14,3 +14,8 @@ alembic upgrade head
 ```
 
 http://localhost:8080/
+
+### mainの実行
+```
+python -m app.main
+```
