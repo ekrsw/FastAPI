@@ -1,7 +1,10 @@
-from fastapi import FastAPI
+import asyncio
+from app.models.user import User
 
-app = FastAPI()
+async def main():
+    await User.create_user(username="test_user", password="test_password")
+    user = await User.get_user_by_username("test_user")
+    print(user.username)
 
-@app.get("/")
-async def root():
-    return {"message": "Hello FastAPI!!"}
+if __name__ == "__main__":
+    asyncio.run(main())

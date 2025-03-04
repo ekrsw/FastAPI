@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field, ConfigDict
+from pydantic import ConfigDict
 from typing import Any
 
 
@@ -35,24 +35,29 @@ class Settings(BaseSettings):
     """
 
     # データベース設定
-    database_host: str = Field("db", env="DATABASE_HOST")
-    database_port: int = Field(5432, env="DATABASE_PORT")
-    database_user: str = Field("admin", env="DATABASE_USER")
-    database_password: str = Field("my_database_password", env="DATABASE_PASSWORD")
-    database_name: str = Field("my_database", env="DATABASE_NAME")
+    database_host: str = "db"
+    database_port: int = 5432
+    database_user: str = "admin"
+    database_password: str = "my_database_password"
+    database_name: str = "my_database"
     
     # API設定
-    api_host: str = Field("0.0.0.0", env="API_HOST")
-    api_port: int = Field(8000, env="API_PORT")
+    api_host: str = "0.0.0.0"
+    api_port: int = 8000
     
     # Nginx設定
-    nginx_port: int = Field(8080, env="NGINX_PORT")
+    nginx_port: int = 8080
     
     # 初期管理者ユーザー設定
-    initial_admin_username: str = Field(..., env="INITIAL_ADMIN_USERNAME")
-    initial_admin_password: str = Field(..., env="INITIAL_ADMIN_PASSWORD")
+    initial_admin_username: str = "admin"
+    initial_admin_password: str = "admin_123"
     
-    model_config = ConfigDict(env_file="../.env")
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        env_prefix="",
+    )
 
 
 settings = Settings()
