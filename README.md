@@ -1,5 +1,6 @@
 ### テスト
 ```
+cd app
 python -m pytest -v
 ```
 #### マイグレーションファイルの作成
@@ -9,7 +10,7 @@ alembic revision --autogenerate -m "create tables"
 ```
 #### マイグレーションファイルの内容をDBへ反映
 ```
-ad app
+cd app
 alembic upgrade head
 ```
 
