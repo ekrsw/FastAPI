@@ -1,4 +1,4 @@
-FROM postgres:15-alpine
+FROM postgres:17.4-alpine
 
 # テスト用の初期設定
 ENV POSTGRES_DB=test_db

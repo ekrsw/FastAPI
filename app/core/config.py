@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     initial_admin_username: str = Field(..., env="INITIAL_ADMIN_USERNAME")
     initial_admin_password: str = Field(..., env="INITIAL_ADMIN_PASSWORD")
     
-    model_config = ConfigDict(env_file=".env")
+    model_config = ConfigDict(env_file="../.env")
 
 
 settings = Settings()
