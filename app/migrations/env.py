@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from app.db.database import Base
+from app.db.database import Base, DATABASE_URL
 from app.models.base import BaseDatabase
 from app.models.user import User
 
@@ -44,7 +44,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    # 環境変数から生成されたDATABASE_URLを使用
+    url = DATABASE_URL
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -60,8 +61,13 @@ async def run_async_migrations() -> None:
     """In this scenario we need to create an Engine
     and associate a connection with the context.
     """
+    # alembic.iniの設定を取得
+    configuration = config.get_section(config.config_ini_section, {})
+    # sqlalchemy.urlを環境変数から生成されたDATABASE_URLで上書き
+    configuration["sqlalchemy.url"] = DATABASE_URL
+    
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
