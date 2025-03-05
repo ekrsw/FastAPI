@@ -1,20 +1,48 @@
 ### セットアップ
+
+#### Github から clone
+
 ```
 git clone
 copy .env.example .env
 ```
 
+#### コンテナの起動
+
+```
+docker-compose up --build -d
+```
+
+#### API コンテナに入る
+
+```
+docker exec -it FastAPI_app /bin/sh
+```
+
+#### マイグレーション
+
+```
+cd app
+alembic revision --autogenerate -m "create tables"
+alembic upgrade head
+```
+
 ### テスト
+
 ```
 cd app
 python -m pytest -v
 ```
+
 #### マイグレーションファイルの作成
+
 ```
 cd app
 alembic revision --autogenerate -m "create tables"
 ```
-#### マイグレーションファイルの内容をDBへ反映
+
+#### マイグレーションファイルの内容を DB へ反映
+
 ```
 cd app
 alembic upgrade head
@@ -22,17 +50,22 @@ alembic upgrade head
 
 http://localhost:8080/
 
-### mainの実行
+### main の実行
+
 ```
 python -m app.main
 ```
 
-### Databaseへの接続
+### Database への接続
+
 > コンテナへの接続
+
 ```
 docker exec -it Postgres_db /bin/bash
 ```
-> PostgreSQLへの接続
+
+> PostgreSQL への接続
+
 ```
 psql -h [host名] -p [ポート番号] -U [ユーザー名] -d [データベース名]
-``` 
+```
