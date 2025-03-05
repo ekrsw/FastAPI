@@ -1,3 +1,9 @@
+### セットアップ
+```
+git clone
+copy .env.example .env
+```
+
 ### テスト
 ```
 cd app
