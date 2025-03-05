@@ -20,3 +20,13 @@ http://localhost:8080/
 ```
 python -m app.main
 ```
+
+### Databaseへの接続
+> コンテナへの接続
+```
+docker exec -it Postgres_db /bin/bash
+```
+> PostgreSQLへの接続
+```
+psql -h [host名] -p [ポート番号] -U [ユーザー名] -d [データベース名]
+``` 

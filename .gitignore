@@ -1,6 +1,6 @@
 venv/
 __pycache__/
 db.sqlite
-docker/db_data/
+docker/postgresql/data/
 .pytest_cache/
 .env

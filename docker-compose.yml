@@ -21,7 +21,7 @@ services:
       - "${DATABASE_PORT}:5432"
     # DBの削除を容易にするためにプロジェクト内のディレクトリにデータを保存
     volumes:
-      - ./docker/db_data:/var/lib/postgresql/data
+      - ./docker/postgresql/data:/var/lib/postgresql/data
     networks:
       - fastapi_network
 
