@@ -1,4 +1,5 @@
 import datetime
+import os
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -6,7 +7,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from app.core.config import settings
 
 
-# データベースの接続URLの構築
+# 環境変数からDATABASE_URLを取得するか、設定から構築する
 DATABASE_URL = (
     f"postgresql+asyncpg://{settings.database_user}:"
     f"{settings.database_password}@{settings.database_host}:"

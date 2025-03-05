@@ -1,15 +1,17 @@
 from logging.config import fileConfig
 
 import asyncio
+import os
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import async_engine_from_config, create_async_engine
 
 from alembic import context
 
 from app.db.database import Base, DATABASE_URL
 from app.models.base import BaseDatabase
 from app.models.user import User
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -61,14 +63,9 @@ async def run_async_migrations() -> None:
     """In this scenario we need to create an Engine
     and associate a connection with the context.
     """
-    # alembic.iniの設定を取得
-    configuration = config.get_section(config.config_ini_section, {})
-    # sqlalchemy.urlを環境変数から生成されたDATABASE_URLで上書き
-    configuration["sqlalchemy.url"] = DATABASE_URL
-    
-    connectable = async_engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
+    # 直接create_async_engineを使用して接続
+    connectable = create_async_engine(
+        DATABASE_URL,
         poolclass=pool.NullPool,
     )
 

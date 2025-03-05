@@ -26,18 +26,24 @@ services:
       - fastapi_network
 
   app:
+    container_name: FastAPI_app
     build:
       context: .
-      dockerfile: .docker/fastapi/dockerfile
+      dockerfile: ./docker/fastapi/Dockerfile
     restart: always
     env_file:
       - .env
     environment:
-      - DATABASE_URL: postgresql+asyncpg://${DATABASE_USER}:${DATABASE_PASSWORD}@db:${DATABASE_PORT}/${DATABASE_NAME}
+      DATABASE_URL: "postgresql+asyncpg://${DATABASE_USER}:${DATABASE_PASSWORD}@db:${DATABASE_PORT}/${DATABASE_NAME}"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_PORT}:8000"
     expose:
       - "${API_PORT}"
+    networks:
+      - fastapi_network
 
 networks:
   fastapi_network:
