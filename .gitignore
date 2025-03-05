@@ -3,4 +3,3 @@ __pycache__/
 db.sqlite
 docker/postgresql/data/
 .pytest_cache/
-.env
