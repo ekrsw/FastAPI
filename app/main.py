@@ -1,11 +1,7 @@
-import asyncio
-from app.models.user import User
+from fastapi import FastAPI
 
+app = FastAPI()
 
-async def main():
-    await User.create_user(username="test_user", plain_password="test_password")
-    user = await User.get_user_by_username("test_user")
-    print(user.username)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
