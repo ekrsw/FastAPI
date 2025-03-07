@@ -5,6 +5,7 @@ from typing import List, Optional
 class UserSchema(BaseModel):
     username: str
     password: str
+    is_admin: Optional[bool] = False
 
     @field_validator("username")
     def username_valid(cls, username):
