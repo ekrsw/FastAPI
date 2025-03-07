@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from app.models.user import User
-from app.schemas.user_schema import UserSchema
+from app.schemas.user_schema import UserResponse
 
 
 router = APIRouter(
@@ -10,8 +10,8 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-@router.post("/", response_model=UserSchema)
-async def create_user(username: str, password: str, is_admin: bool=False) -> User:
+@router.post("/", response_model=UserResponse)
+async def create_user(username: str, password: str, is_admin: bool=False) -> UserResponse:
     """
     新しいユーザーを登録します。
 
@@ -29,7 +29,7 @@ async def create_user(username: str, password: str, is_admin: bool=False) -> Use
         作成するユーザーの管理者権限の有無。デフォルトはFalse。
     Returns
     -------
-    User
+    UserResponse
         取得したユーザーの詳細を含むレスポンスモデル。
 
     Raises

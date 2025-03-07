@@ -15,6 +15,9 @@ class User(BaseDatabase):
     hashed_password = Column(String, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
 
+    def __repr__(self):
+        return f"<User {self.username}>"
+
     async def valify_password(self, plain_password: str) -> bool:
         """入力されたパスワードがハッシュと一致するかを確かめる"""
         return pwd_context.verify(plain_password, self.hashed_password)

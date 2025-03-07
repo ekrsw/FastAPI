@@ -2,6 +2,14 @@ from pydantic import BaseModel, field_validator
 from typing import List, Optional
 
 
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    is_admin: bool
+    
+    class Config:
+        from_attributes = True
+
 class UserSchema(BaseModel):
     username: str
     password: str
