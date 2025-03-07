@@ -32,7 +32,7 @@ class User(BaseDatabase):
             hashed_password = await cls.set_password(user_schema.password)
             new_user = cls(username=user_schema.username, hashed_password=hashed_password, is_admin=is_admin)
             session.add(new_user)
-            return new_user
+        return new_user
     
     @classmethod
     async def get_all_users(cls):
@@ -40,7 +40,7 @@ class User(BaseDatabase):
         async with AsyncContextManager() as session:
             result = await session.execute(Select(cls))
             users = result.scalars().all()
-            return users
+        return users
 
     @classmethod
     async def get_user_by_id(cls, user_id: int):
@@ -48,7 +48,7 @@ class User(BaseDatabase):
         async with AsyncContextManager() as session:
             result = await session.execute(Select(cls).where(cls.id == user_id))
             user = result.scalar_one_or_none()
-            return user
+        return user
     
     @classmethod
     async def get_user_by_username(cls, username: str):
@@ -56,7 +56,7 @@ class User(BaseDatabase):
         async with AsyncContextManager() as session:
             result = await session.execute(Select(cls).where(cls.username == username))
             user = result.scalar_one_or_none()
-            return user
+        return user
     
     @classmethod
     async def update_user(cls, user_id: int, username: str, is_admin: Optional[bool]=None):
