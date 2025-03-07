@@ -35,22 +35,22 @@ class Settings(BaseSettings):
     """
 
     # データベース設定
-    database_host: str = Field("localhost", env="DATABASE_HOST")
-    database_port: int = Field(5432, env="DATABASE_PORT")
-    database_user: str = Field("my_database_user", env="DATABASE_USER")
-    database_password: str = Field("my_database_password", env="DATABASE_PASSWORD")
-    database_name: str = Field("my_database", env="DATABASE_NAME")
+    database_host: str = Field(default="localhost", json_schema_extra={"env": "DATABASE_HOST"})
+    database_port: int = Field(default=5432, json_schema_extra={"env": "DATABASE_PORT"})
+    database_user: str = Field(default="my_database_user", json_schema_extra={"env": "DATABASE_USER"})
+    database_password: str = Field(default="my_database_password", json_schema_extra={"env": "DATABASE_PASSWORD"})
+    database_name: str = Field(default="my_database", json_schema_extra={"env": "DATABASE_NAME"})
     
     # API設定
-    api_host: str = Field("localhost", env="API_HOST")
-    api_port: int = Field(8000, env="API_PORT")
+    api_host: str = Field(default="localhost", json_schema_extra={"env": "API_HOST"})
+    api_port: int = Field(default=8000, json_schema_extra={"env": "API_PORT"})
     
     # Nginx設定
-    nginx_port: int = Field(8080, env="NGINX_PORT")
+    nginx_port: int = Field(default=8080, json_schema_extra={"env": "NGINX_PORT"})
     
     # 初期管理者ユーザー設定
-    initial_admin_username: str = Field("admin", env="INITIAL_ADMIN_USERNAME")
-    initial_admin_password: str = Field("admin123", env="INITIAL_ADMIN_PASSWORD")
+    initial_admin_username: str = Field(default="admin", json_schema_extra={"env": "INITIAL_ADMIN_USERNAME"})
+    initial_admin_password: str = Field(default="admin123", json_schema_extra={"env": "INITIAL_ADMIN_PASSWORD"})
     
     model_config = ConfigDict(
         env_file=".env",
