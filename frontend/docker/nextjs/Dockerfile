@@ -1,11 +1,15 @@
-FROM node:23-alpine
+FROM node:20-alpine
 
-# 作業ディレクトリの設定
-WORKDIR /workdir
+WORKDIR /app
 
-COPY ./frontend /workdir
-
+COPY package*.json ./
 RUN npm install
-RUN npm run build
 
-CMD ["npm", "start"]
+COPY . .
+
+ENV HOSTNAME "0.0.0.0"
+ENV PORT 3000
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
