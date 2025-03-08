@@ -1,0 +1,23 @@
+services:
+  nextjs:
+    container_name: NextJS_app
+    build:
+      context: .
+      dockerfile: ./frontend/docker/nextjs/Dockerfile
+    restart: always
+    ports:
+      - "${FRONTEND_PORT}:3000"
+    expose:
+      - "${FRONTEND_PORT}"
+    volumes:
+      - ./frontend:/workdir
+    networks:
+      - fastapi_network
+
+networks:
+  fastapi_network:
+    name: fastapi_network
+    driver: bridge
+
+volumes:
+  dev_data:
