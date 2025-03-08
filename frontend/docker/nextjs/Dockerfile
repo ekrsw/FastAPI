@@ -1,13 +1,13 @@
 FROM node:23.9.0-alpine
 
-WORKDIR /app
+WORKDIR /workdir
 # bashをインストール
 RUN apk add --no-cache bash
 
-COPY package*.json ./
+COPY frontend/admin/package*.json ./
 RUN npm install
 
-COPY . .
+COPY frontend/admin ./
 
 ENV HOSTNAME "0.0.0.0"
 ENV PORT 3000

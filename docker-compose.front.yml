@@ -1,16 +1,16 @@
 services:
   nextjs:
-    container_name: NextJS_app
+    container_name: NextJS_admin
     build:
-      context: ./frontend
-      dockerfile: ./docker/nextjs/Dockerfile
+      context: .
+      dockerfile: ./frontend/docker/nextjs/Dockerfile
     restart: always
     ports:
       - "${FRONTEND_PORT}:3000"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
+      - ./frontend/admin:/workdir
+      - /workdir/node_modules
+      - /workdir/.next
     networks:
       - fastapi_network
 
