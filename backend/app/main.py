@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from app.models.user import User
 
-from app.routers import users, auth
+from app.routers import users
 
 
 app = FastAPI()
@@ -19,4 +19,3 @@ async def get_user_by_id(user_id: int):
 
 # ルーターの登録
 app.include_router(users.router)
-app.include_router(auth.router)
