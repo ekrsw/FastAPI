@@ -6,6 +6,7 @@ __pycache__/
 
 # データベース関連
 db.sqlite
+backend/docker/postgresql/data/*
 
 # 環境設定
 .env
