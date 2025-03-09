@@ -12,7 +12,7 @@ services:
       - /workdir/node_modules
       - /workdir/.next
     networks:
-      - fastapi_networkn
+      - fastapi_network
       
   db:
     image: postgres:17.4-alpine
