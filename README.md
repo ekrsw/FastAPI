@@ -34,6 +34,10 @@ cd app
 python -m pytest -v
 ```
 
+```
+docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit
+```
+
 #### マイグレーションファイルの作成
 
 ```
