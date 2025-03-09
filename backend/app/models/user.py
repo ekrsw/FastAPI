@@ -18,7 +18,7 @@ class User(BaseDatabase):
     def __repr__(self):
         return f"<User {self.username}>"
 
-    async def valify_password(self, plain_password: str) -> bool:
+    async def verify_password(self, plain_password: str) -> bool:
         """入力されたパスワードがハッシュと一致するかを確かめる"""
         return pwd_context.verify(plain_password, self.hashed_password)
     

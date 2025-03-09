@@ -55,11 +55,11 @@ async def test_validate_password(test_user, test_db_session):
     user, password = test_user
     
     # 正しいパスワードの検証
-    is_valid = await user.valify_password(password)
+    is_valid = await user.verify_password(password)
     assert is_valid == True, "正しいパスワードが検証できているか"
     
     # 間違ったパスワードの検証
-    is_valid = await user.valify_password("wrong_password")
+    is_valid = await user.verify_password("wrong_password")
     assert is_valid == False, "間違ったパスワードが拒否されているか"
 
 @pytest.mark.asyncio
@@ -155,11 +155,11 @@ async def test_update_password(test_user, test_db_session):
     updated_user = result.scalar_one_or_none()
     
     # 古いパスワードが使えなくなっているか確認
-    old_password_valid = await updated_user.valify_password(old_password)
+    old_password_valid = await updated_user.verify_password(old_password)
     assert old_password_valid == False, "古いパスワードが使えなくなっているか"
     
     # 新しいパスワードが使えるか確認
-    new_password_valid = await updated_user.valify_password(new_password)
+    new_password_valid = await updated_user.verify_password(new_password)
     assert new_password_valid == True, "新しいパスワードが使えるか"
 
 @pytest.mark.asyncio
