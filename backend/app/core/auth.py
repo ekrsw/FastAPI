@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 from fastapi import Depends, HTTPException, status
@@ -38,9 +38,9 @@ def create_jwt_token(
     """
     to_encode = data.copy()
     if expires_delta is None:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     else:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, secret_key, algorithm=algorithm)
 
@@ -108,7 +108,7 @@ async def authenticate_user(username: str, password: str) -> Optional[User]:
         認証に成功した場合はユーザーオブジェクトを返し、失敗した場合はNoneを返します。
     """
     user = await User.get_user_by_username(username)
-    if not user or not User.verify_password(password, user.hashed_password):
+    if not user or not await user.verify_password(password):
         return None
     return user
 
