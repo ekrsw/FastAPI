@@ -8,14 +8,13 @@ from app.tests.conftest import test_admin, test_user, unique_username, client
 
 
 @pytest.mark.asyncio
-async def test_login_for_access_token_success(client: AsyncClient):
+async def test_login_for_access_token_success(test_user, client: AsyncClient):
     """
     正しい認証情報を使用してアクセストークンとリフレッシュトークンを取得できることを確認します。
     """
     # テストユーザーの作成
-    username = "testuser"
-    password = "testpassword"
-    new_user = await User.create_user(username=username, plain_password=password)
+    username, password = test_user
+    await User.create_user(username=str(username), plain_password=str(password))
 
     # /auth/token エンドポイントにリクエストを送信
     response = await client.post(
@@ -32,4 +31,4 @@ async def test_login_for_access_token_success(client: AsyncClient):
     # アクセストークンのデコードと検証
     access_token = tokens["access_token"]
     payload = jwt.decode(access_token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
-    assert payload.get("sub") == username, "アクセストークンのペイロードが正しくありません"
+    assert payload.get("sub") == str(username), "アクセストークンのペイロードが正しくありません"
