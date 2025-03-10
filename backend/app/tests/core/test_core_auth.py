@@ -2,12 +2,14 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from jose import jwt, JWTError
 from unittest.mock import patch, AsyncMock
+from fastapi import HTTPException, status
 
 from app.core.auth import (
     create_jwt_token,
     create_access_token,
     decode_token,
-    authenticate_user
+    authenticate_user,
+    get_current_user
 )
 from app.models.user import User
 
@@ -320,3 +322,83 @@ async def test_authenticate_user_nonexistent_user():
         # 結果の検証
         assert user is None
         mock_get_user.assert_called_once_with("nonexistent_user")
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_success():
+    """有効なトークンで現在のユーザーが正しく取得できることをテストします。"""
+    from app.core.config import settings
+    
+    # テストユーザーの準備
+    mock_user = AsyncMock(spec=User)
+    mock_user.username = "testuser"
+    
+    # get_user_by_usernameをモック化
+    with patch.object(
+        User, 'get_user_by_username', new_callable=AsyncMock
+    ) as mock_get_user:
+        mock_get_user.return_value = mock_user
+        
+        # 有効なトークンの生成
+        token = create_access_token({"sub": "testuser"})
+        
+        # ユーザー取得の実行
+        user = await get_current_user(token)
+        
+        # 結果の検証
+        assert user is not None
+        assert user == mock_user
+        mock_get_user.assert_called_once_with(username="testuser")
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_invalid_token():
+    """無効なトークンで認証が失敗することをテストします。"""
+    # 無効なトークンでテスト
+    with pytest.raises(HTTPException) as exc_info:
+        await get_current_user("invalid.token.string")
+    
+    # エラーの検証
+    assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
+    assert exc_info.value.detail == "Could not validate credentials"
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_nonexistent_user():
+    """トークンは有効だがユーザーが存在しない場合のテストです。"""
+    from app.core.config import settings
+    
+    # get_user_by_usernameをモック化して存在しないユーザーをシミュレート
+    with patch.object(
+        User, 'get_user_by_username', new_callable=AsyncMock
+    ) as mock_get_user:
+        mock_get_user.return_value = None
+        
+        # 有効なトークンの生成
+        token = create_access_token({"sub": "nonexistent_user"})
+        
+        # 存在しないユーザーでの認証実行
+        with pytest.raises(HTTPException) as exc_info:
+            await get_current_user(token)
+        
+        # エラーの検証
+        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
+        assert exc_info.value.detail == "Could not validate credentials"
+        mock_get_user.assert_called_once_with(username="nonexistent_user")
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_missing_sub_claim():
+    """subクレームが含まれていないトークンでの認証失敗をテストします。"""
+    from app.core.config import settings
+    
+    # subクレームのない有効なトークンの生成
+    token = create_access_token({"data": "no_sub_claim"})
+    
+    # 認証実行
+    with pytest.raises(HTTPException) as exc_info:
+        await get_current_user(token)
+    
+    # エラーの検証
+    assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
+    assert exc_info.value.detail == "Could not validate credentials"

@@ -120,8 +120,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> Optional[User
     ----------
     token : str, optional
         リクエストに含まれるJWT。OAuth2スキームを通じて取得されます。
-    db : AsyncSession, optional
-        データベースセッション。依存関係として取得されます。
 
     Raises
     ------
@@ -139,7 +137,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> Optional[User
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = decode_token(token, settings.secret_key, [settings.algorithm])
+        payload = decode_token(token, settings.jwt_secret_key, [settings.jwt_algorithm])
         username: Optional[str] = payload.get("sub")
         if username is None:
             raise credentials_exception
