@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.core import auth
 from app.models.user import User
 from app.schemas.user_schema import UserResponse
 
 
 router = APIRouter(
-    prefix="/user",
+    prefix="/users",
     tags=["user"],
     responses={404: {"description": "Not found"}},
 )
@@ -46,17 +47,23 @@ async def create_user(username: str, password: str, is_admin: bool=False) -> Use
     return new_user
 
 @router.get("/{user_id}", response_model=UserResponse)
-async def read_user_by_id(user_id: int) -> UserResponse:
+async def read_user_by_id(
+    user_id: int,
+    current_user: User=Depends(auth.get_current_user)
+    ) -> UserResponse:
     """
     指定されたユーザーの情報を取得します。
 
     このエンドポイントは、指定されたユーザーの情報を取得します。
-    認証不要でアクセスできます。
+    認証されたユーザーのみがアクセスできます。
 
     Parameters
     ----------
     user_id : int
         取得するユーザーのID。
+    current_user : User
+        現在認証されているユーザー。
+
     Returns
     -------
     UserResponse
@@ -65,15 +72,19 @@ async def read_user_by_id(user_id: int) -> UserResponse:
     Raises
     ------
     HTTPException
-        ユーザーが存在しない場合に404 Not Foundエラーを返します。
+        - ユーザーが存在しない場合に404 Not Foundエラーを返します。
+        - 認証されていない場合に401 Unauthorizedエラーを返します。
     """
     user = await User.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@router.get("/{username}", response_model=UserResponse)
-async def read_user_by_username(username: str) -> UserResponse:
+@router.get("/name/{username}", response_model=UserResponse)
+async def read_user_by_username(
+    username: str,
+    current_user: User=Depends(auth.get_current_user)
+    ) -> UserResponse:
     """
     指定されたユーザーの情報を取得します。
 
@@ -100,7 +111,7 @@ async def read_user_by_username(username: str) -> UserResponse:
     return user
 
 @router.get("/", response_model=UserResponse)
-async def read_all_users() -> UserResponse:
+async def read_all_users(current_user: User=Depends(auth.get_current_user)) -> UserResponse:
     """
     全てのユーザーの情報を取得します。
 

@@ -79,3 +79,44 @@ async def test_refresh_access_token_success(test_user, client: AsyncClient):
     access_token = new_tokens["access_token"]
     payload = jwt.decode(access_token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
     assert payload.get("sub") == str(username), "新しいアクセストークンのペイロードが正しくありません"
+
+@pytest.mark.asyncio
+async def test_refresh_access_token_invalid_token(client: AsyncClient):
+    """
+    無効なリフレッシュトークンでアクセストークンのリフレッシュが失敗することを確認します。
+    """
+    # 無効なリフレッシュトークンを使用
+    response = await client.post(
+        "/auth/refresh",
+        headers={"Refresh-Token": "invalidtoken"}
+    )
+
+    assert response.status_code == 401, "無効なリフレッシュトークンで 401 エラーが返されるべきです"
+    assert response.json()["detail"] == "Invalid refresh token", "エラーメッセージが正しくありません"
+
+@pytest.mark.asyncio
+async def test_access_protected_route_with_token(test_user, client: AsyncClient):
+    """
+    取得したアクセストークンを使用して保護されたエンドポイントにアクセスできることを確認します。
+    """
+    # テストユーザーの作成
+    username, password = test_user
+    await User.create_user(username=str(username), plain_password=str(password))
+
+    # トークン取得
+    response = await client.post(
+        "/auth/token",
+        data={"username": username, "password": password}
+    )
+    tokens = response.json()
+    access_token = tokens["access_token"]
+
+    # 保護されたエンドポイントにアクセス
+    response = await client.get(
+        f"/users/name/{username}",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    assert response.status_code == 200, f"保護されたエンドポイントへのアクセスに失敗しました: {response.text}"
+    data = response.json()
+    assert data["username"] == str(username), "取得したユーザー名が正しくありません"
