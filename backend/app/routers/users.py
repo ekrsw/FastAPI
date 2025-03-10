@@ -211,6 +211,10 @@ async def delete_user(
         raise HTTPException(status_code=404, detail="User not found")
     
     # 管理者のみがアクセス可能
-    
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions. Only admins can delete users."
+        )
     await User.delete_user(user_id)
     return {"message": "User deleted successfully"}
