@@ -130,16 +130,21 @@ async def read_all_users(current_user: User=Depends(auth.get_current_user)) -> L
         users = []  # 空のリストを返す（404エラーは返さない）
     return [UserResponse.model_validate(user) for user in users]  # SQLAlchemyモデルをPydanticモデルに変換
 
+from fastapi import Body
+
 @router.put("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: int,
-    username: str,
-    is_admin: bool=None) -> UserResponse:
+    username: str = Body(...),
+    is_admin: bool = Body(None),
+    current_user: User = Depends(auth.get_current_user)
+    ) -> UserResponse:
     """
     指定されたユーザーの情報を更新します。
 
     このエンドポイントは、指定されたユーザーの情報を更新します。
-    認証不要でアクセスできます。
+    認証されたユーザーかつ自分自身か、管理者のみがアクセスできます。
+    管理者権限の変更は管理者のみが実行できます。
 
     Parameters
     ----------
@@ -162,11 +167,29 @@ async def update_user(
     user = await User.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # 自分自身か管理者のみがアクセス可能
+    if user_id != current_user.id and not current_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions. Only the user themselves or an admin can update user information. "
+        )
+
+    # 管理者権限の変更は管理者のみが実行可能
+    if is_admin is not None and is_admin != user.is_admin and not current_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions. Only admins can change admin privileges."
+        )
+    
     await User.update_user(user_id, username, is_admin)
     return await User.get_user_by_id(user_id)
 
 @router.delete("/{user_id}")
-async def delete_user(user_id: int):
+async def delete_user(
+    user_id: int,
+    current_user: User=Depends(auth.get_current_user)
+    ) -> dict:
     """
     指定されたユーザーを削除します。
 

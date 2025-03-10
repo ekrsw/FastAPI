@@ -24,12 +24,13 @@ async def test_user(unique_username):
     return user, password
 
 @pytest_asyncio.fixture
-async def test_admin(unique_username):
+async def test_admin():
     """テスト用の管理者ユーザーを作成する"""
+    admin_username = f"admin_{uuid.uuid4()}"
     password = "test_admin_password123"
     # テスト用の管理者ユーザーを作成
     admin_user = await User.create_user(
-        username=unique_username,
+        username=admin_username,
         plain_password=password,
         is_admin=True
     )

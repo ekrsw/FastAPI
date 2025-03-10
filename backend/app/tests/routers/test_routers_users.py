@@ -229,3 +229,197 @@ async def test_read_all_users_empty(test_user, client: AsyncClient):
     assert isinstance(data, list), "レスポンスは配列であるべきです"
     assert len(data) == 1, "テストユーザーのみが存在するべきです"
     assert data[0]["id"] == user.id, "テストユーザーの情報が正しくありません"
+
+@pytest.mark.asyncio
+async def test_update_user_self_success(test_user, client: AsyncClient):
+    """
+    一般ユーザーが自分自身の情報を更新できることを確認します。
+    """
+    # テストユーザーの作成とアクセストークンの取得
+    user, password = test_user
+    
+    # /auth/token エンドポイントでアクセストークンを取得
+    token_response = await client.post(
+        "/auth/token",
+        data={"username": user.username, "password": password}
+    )
+    access_token = token_response.json()["access_token"]
+
+    # 新しいユーザー名
+    new_username = f"updated_{user.username}"
+    
+    # /users/{user_id} エンドポイントにPUTリクエストを送信
+    response = await client.put(
+        f"/users/{user.id}",
+        json={"username": new_username},
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    # レスポンスの検証
+    assert response.status_code == 200, f"ユーザー情報の更新に失敗しました: {response.text}"
+    data = response.json()
+    assert data["id"] == user.id, "更新したユーザーIDが正しくありません"
+    assert data["username"] == new_username, "ユーザー名が更新されていません"
+    assert data["is_admin"] == user.is_admin, "管理者権限が変更されています"
+
+@pytest.mark.asyncio
+async def test_update_user_by_admin_success(test_admin, test_user, client: AsyncClient):
+    """
+    管理者が他のユーザーの情報を更新できることを確認します。
+    """
+    # 管理者ユーザーとテストユーザーの作成
+    admin, admin_password = test_admin
+    user, _ = test_user
+    
+    # 管理者のアクセストークンを取得
+    token_response = await client.post(
+        "/auth/token",
+        data={"username": admin.username, "password": admin_password}
+    )
+    access_token = token_response.json()["access_token"]
+
+    # 新しいユーザー名
+    new_username = f"admin_updated_{user.username}"
+    
+    # 管理者が一般ユーザーの情報を更新
+    response = await client.put(
+        f"/users/{user.id}",
+        json={"username": new_username},
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    # レスポンスの検証
+    assert response.status_code == 200, f"管理者によるユーザー情報の更新に失敗しました: {response.text}"
+    data = response.json()
+    assert data["id"] == user.id, "更新したユーザーIDが正しくありません"
+    assert data["username"] == new_username, "ユーザー名が更新されていません"
+    assert data["is_admin"] == user.is_admin, "管理者権限が変更されています"
+
+@pytest.mark.asyncio
+async def test_update_user_admin_privilege_success(test_admin, test_user, client: AsyncClient):
+    """
+    管理者が他のユーザーの管理者権限を変更できることを確認します。
+    """
+    # 管理者ユーザーとテストユーザーの作成
+    admin, admin_password = test_admin
+    user, _ = test_user
+    
+    # 管理者のアクセストークンを取得
+    token_response = await client.post(
+        "/auth/token",
+        data={"username": admin.username, "password": admin_password}
+    )
+    access_token = token_response.json()["access_token"]
+
+    # 一般ユーザーを管理者に昇格
+    response = await client.put(
+        f"/users/{user.id}",
+        json={"username": user.username, "is_admin": True},
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    # レスポンスの検証
+    assert response.status_code == 200, f"管理者権限の変更に失敗しました: {response.text}"
+    data = response.json()
+    assert data["id"] == user.id, "更新したユーザーIDが正しくありません"
+    assert data["username"] == user.username, "ユーザー名が変更されています"
+    assert data["is_admin"] == True, "管理者権限が更新されていません"
+
+@pytest.mark.asyncio
+async def test_update_user_not_found(test_user, client: AsyncClient):
+    """
+    存在しないユーザーIDを指定した場合に404エラーが返されることを確認します。
+    """
+    # テストユーザーの作成とアクセストークンの取得
+    user, password = test_user
+    
+    # /auth/token エンドポイントでアクセストークンを取得
+    token_response = await client.post(
+        "/auth/token",
+        data={"username": user.username, "password": password}
+    )
+    access_token = token_response.json()["access_token"]
+
+    # 存在しないユーザーIDでリクエストを送信
+    non_existent_id = 99999
+    response = await client.put(
+        f"/users/{non_existent_id}",
+        json={"username": "new_username"},
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    # レスポンスの検証
+    assert response.status_code == 404, "存在しないユーザーIDで404エラーが返されるべきです"
+    assert response.json()["detail"] == "User not found", "エラーメッセージが正しくありません"
+
+@pytest.mark.asyncio
+async def test_update_other_user_forbidden(test_user, client: AsyncClient):
+    """
+    一般ユーザーが他のユーザーの情報を更新しようとした場合に403エラーが返されることを確認します。
+    """
+    # 2人のテストユーザーを作成
+    user1, password1 = test_user
+    user2 = await User.create_user(
+        username="another_test_user",
+        plain_password="test_password123",
+        is_admin=False
+    )
+    
+    # user1のアクセストークンを取得
+    token_response = await client.post(
+        "/auth/token",
+        data={"username": user1.username, "password": password1}
+    )
+    access_token = token_response.json()["access_token"]
+
+    # user1がuser2の情報を更新しようとする
+    response = await client.put(
+        f"/users/{user2.id}",
+        json={"username": "new_username"},
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    # レスポンスの検証
+    assert response.status_code == 403, "他のユーザーの情報更新で403エラーが返されるべきです"
+    assert "Not enough permissions" in response.json()["detail"], "エラーメッセージが正しくありません"
+
+@pytest.mark.asyncio
+async def test_update_admin_privilege_forbidden(test_user, client: AsyncClient):
+    """
+    一般ユーザーが管理者権限を変更しようとした場合に403エラーが返されることを確認します。
+    """
+    # テストユーザーの作成とアクセストークンの取得
+    user, password = test_user
+    
+    # /auth/token エンドポイントでアクセストークンを取得
+    token_response = await client.post(
+        "/auth/token",
+        data={"username": user.username, "password": password}
+    )
+    access_token = token_response.json()["access_token"]
+
+    # 自分自身を管理者に昇格しようとする
+    response = await client.put(
+        f"/users/{user.id}",
+        json={"username": user.username, "is_admin": True},
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    # レスポンスの検証
+    assert response.status_code == 403, "管理者権限の変更で403エラーが返されるべきです"
+    assert "Only admins can change admin privileges" in response.json()["detail"], "エラーメッセージが正しくありません"
+
+@pytest.mark.asyncio
+async def test_update_user_unauthorized(client: AsyncClient):
+    """
+    認証なしでアクセスした場合に401エラーが返されることを確認します。
+    """
+    # 認証なしでリクエストを送信
+    response = await client.put(
+        "/users/1",
+        json={"username": "new_username"}
+    )
+
+    # レスポンスの検証
+    assert response.status_code == 401, "認証なしのアクセスで401エラーが返されるべきです"
+    assert response.json()["detail"] == "Not authenticated", "エラーメッセージが正しくありません"

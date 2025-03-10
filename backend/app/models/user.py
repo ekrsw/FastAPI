@@ -67,7 +67,8 @@ class User(BaseDatabase):
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id)
             user.username = username
-            user.is_admin = is_admin
+            if is_admin is not None:  # is_adminがNoneでない場合のみ更新
+                user.is_admin = is_admin
             session.add(user)
     
     @classmethod

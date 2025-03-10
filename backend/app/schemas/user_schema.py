@@ -28,6 +28,6 @@ class UserSchema(BaseModel):
         if password is not None:
             if not password.strip():
                 raise ValueError("password must not be empty")
-            if len(password) < 8 or len(password) > 20:
-                raise ValueError("password must be between 8 and 20 characters")
+            if len(password) < 8 or len(password) > 30:
+                raise ValueError("password must be between 8 and 30 characters")
         return password
