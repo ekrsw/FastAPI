@@ -424,6 +424,7 @@ async def test_update_user_unauthorized(client: AsyncClient):
     assert response.status_code == 401, "認証なしのアクセスで401エラーが返されるべきです"
     assert response.json()["detail"] == "Not authenticated", "エラーメッセージが正しくありません"
 
+
 @pytest.mark.asyncio
 async def test_delete_user_by_admin_success(test_admin, test_user, client: AsyncClient):
     """

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 import asyncio
 import logging
 import os
@@ -14,31 +15,13 @@ from app.db.database import Database
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# FastAPIアプリケーションの作成
-app = FastAPI(
-    title="FastAPI Backend",
-    description="FastAPIを使用したバックエンドAPI",
-    version="0.1.0",
-)
-
-# CORSミドルウェアの設定
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 本番環境では適切に制限
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# ルーターの登録
-app.include_router(users.router)
-app.include_router(auth.router)
-
-# データベース初期化
-@app.on_event("startup")
-async def startup_db_client():
-    """アプリケーション起動時にデータベースを初期化します"""
+# lifespanコンテキストマネージャー
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """アプリケーションのライフサイクルを管理します"""
+    # 起動時の処理
     try:
+        # データベース初期化
         db = Database()
         await db.init()
         logger.info("Database initialized successfully")
@@ -61,11 +44,32 @@ async def startup_db_client():
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
         raise
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    """アプリケーション終了時の処理"""
+    
+    yield  # アプリケーションの実行中
+    
+    # 終了時の処理
     logger.info("Shutting down application")
+
+# FastAPIアプリケーションの作成
+app = FastAPI(
+    title="FastAPI Backend",
+    description="FastAPIを使用したバックエンドAPI",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+# CORSミドルウェアの設定
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 本番環境では適切に制限
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ルーターの登録
+app.include_router(users.router)
+app.include_router(auth.router)
 
 # ルートパスのエンドポイント
 @app.get("/")
