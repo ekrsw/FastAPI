@@ -4,6 +4,7 @@ alembic==1.14.1
 bcrypt==3.2.2
 fastapi==0.115.8
 greenlet==3.1.1
+httpx
 passlib==1.7.4
 pydantic_settings==2.8.1
 pydantic==2.10.6

@@ -1,48 +1,33 @@
-import os
 import pytest
 import pytest_asyncio
-import sys
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+import uuid
 
-# プロジェクトのルートディレクトリをPythonパスに追加
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-from app.db.database import Base
 from app.models.user import User
 
-# テスト用のSQLiteインメモリデータベースURL
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-@pytest_asyncio.fixture(scope="function")
-async def test_db_engine():
-    """テスト用のデータベースエンジンを作成する"""
-    engine = create_async_engine(
-        TEST_DATABASE_URL,
-        echo=True,
-    )
-    
-    # テーブルを作成
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
-    yield engine
-    
-    # テーブルを削除
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    
-    await engine.dispose()
+@pytest.fixture
+def unique_username():
+    """ユニークなユーザー名を生成する"""
+    return f"user_{uuid.uuid4()}"
 
-@pytest_asyncio.fixture(scope="function")
-async def test_db_session(test_db_engine):
-    """テスト用のデータベースセッションを作成する"""
-    async_session = sessionmaker(
-        test_db_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
+@pytest_asyncio.fixture
+async def test_user(unique_username):
+    """テスト用の一般ユーザーを作成する"""
+    password = "test_password123"
+    user = await User.create_user(
+        username=unique_username,
+        plain_password=password,
+        is_admin=False)
+    return user, password
+
+@pytest_asyncio.fixture
+async def test_admin(unique_username):
+    """テスト用の管理者ユーザーを作成する"""
+    password = "test_admin_password123"
+    # テスト用の管理者ユーザーを作成
+    admin_user = await User.create_user(
+        username=unique_username,
+        plain_password=password,
+        is_admin=True
     )
-    
-    async with async_session() as session:
-        yield session
-        await session.rollback()
+    return admin_user, password
