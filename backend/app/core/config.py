@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = Field(default=30, json_schema_extra={"env": "JWT_ACCESS_TOKEN_EXPIRE_MINUTES"})
     jwt_refresh_secret_key: str = Field(default="my_secret_key", json_schema_extra={"env": "JWT_REFRESH_SECRET_KEY"})
     jwt_refresh_algorithm: str = Field(default="HS256", json_schema_extra={"env": "JWT_REFRESH_ALGORITHM"})
-    jwt_refresh_token_expire_minutes: int = Field(default=30, json_schema_extra={"env": "JWT_REFRESH_TOKEN_EXPIRE_MINUTES"})
+    jwt_refresh_token_expire_minutes: int = Field(default=1440, json_schema_extra={"env": "JWT_REFRESH_TOKEN_EXPIRE_MINUTES"})
     
     # Nginx設定
     nginx_port: int = Field(default=8080, json_schema_extra={"env": "NGINX_PORT"})
