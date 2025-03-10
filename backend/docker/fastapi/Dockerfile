@@ -22,4 +22,7 @@ RUN adduser --disabled-password --gecos "" appuser && \
     chown -R appuser:appuser /workdir
 
 # Uvicornでアプリケーションを起動（ワーカー数を制限）
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# 環境変数からホストとポートを取得するようにエントリポイントスクリプトを使用
+COPY ./backend/docker/fastapi/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
