@@ -69,6 +69,34 @@ def create_access_token(data: Dict[str, str], expires_delta: Optional[timedelta]
         expires_delta=expires_delta
     )
 
+def create_refresh_token(
+        data: Dict[str, str],
+        expires_delta: Optional[timedelta] = None
+        ) -> str:
+    """
+    指定されたペイロードと有効期限でリフレッシュトークンを作成します。
+
+    Parameters
+    ----------
+    data : Dict[str, str]
+        リフレッシュトークンに含めるペイロードデータ。
+    expires_delta : Optional[timedelta], optional
+        トークンの有効期限を設定する時間差。指定しない場合は1日後に設定されます。
+
+    Returns
+    -------
+    str
+        エンコードされたリフレッシュトークン。
+    """
+    if expires_delta is None:
+        expires_delta = timedelta(days=1)
+    return create_jwt_token(
+        data,
+        secret_key=settings.jwt_refresh_secret_key,
+        algorithm=settings.jwt_refresh_algorithm,
+        expires_delta=expires_delta
+    )
+
 def decode_token(token: str, secret_key: str, algorithms: List[str]) -> Dict:
     """
     JWTをデコードし、そのペイロードを返します。

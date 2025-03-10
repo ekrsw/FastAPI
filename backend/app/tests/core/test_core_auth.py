@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 from app.core.auth import (
     create_jwt_token,
     create_access_token,
+    create_refresh_token,
     decode_token,
     authenticate_user,
     get_current_user
@@ -100,6 +101,96 @@ def test_create_jwt_token_payload_content():
     assert payload["email"] == "test@example.com"
     assert payload["role"] == "admin"
     assert "exp" in payload  # 有効期限フィールドが存在することを確認
+
+
+def test_create_refresh_token_with_default_expiration():
+    """デフォルトの有効期限（1日）でリフレッシュトークンが正しく生成されることをテストします。"""
+    from app.core.config import settings
+    
+    # テストデータの準備
+    test_data = {"sub": "testuser"}
+    
+    # トークンの生成
+    token = create_refresh_token(data=test_data)
+    
+    # トークンのデコードと検証
+    payload = jwt.decode(
+        token,
+        settings.jwt_refresh_secret_key,
+        algorithms=[settings.jwt_refresh_algorithm]
+    )
+    
+    # ペイロードの検証
+    assert payload["sub"] == "testuser"
+    
+    # 有効期限の検証（デフォルト1日）
+    exp_time = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+    current_time = datetime.now(timezone.utc)
+    time_diff = exp_time - current_time
+    
+    # 23時間59分から24時間の間であることを確認（1分の余裕を持たせる）
+    assert timedelta(hours=23, minutes=59) <= time_diff <= timedelta(days=1)
+
+
+def test_create_refresh_token_with_custom_expiration():
+    """カスタムの有効期限でリフレッシュトークンが正しく生成されることをテストします。"""
+    from app.core.config import settings
+    
+    # テストデータの準備
+    test_data = {"sub": "testuser"}
+    custom_expires_delta = timedelta(days=7)
+    
+    # トークンの生成
+    token = create_refresh_token(
+        data=test_data,
+        expires_delta=custom_expires_delta
+    )
+    
+    # トークンのデコードと検証
+    payload = jwt.decode(
+        token,
+        settings.jwt_refresh_secret_key,
+        algorithms=[settings.jwt_refresh_algorithm]
+    )
+    
+    # ペイロードの検証
+    assert payload["sub"] == "testuser"
+    
+    # 有効期限の検証（7日）
+    exp_time = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+    current_time = datetime.now(timezone.utc)
+    time_diff = exp_time - current_time
+    
+    # 6日23時間59分から7日の間であることを確認（1分の余裕を持たせる）
+    assert timedelta(days=6, hours=23, minutes=59) <= time_diff <= timedelta(days=7)
+
+
+def test_create_refresh_token_with_additional_claims():
+    """追加のクレームを含むリフレッシュトークンが正しく生成されることをテストします。"""
+    from app.core.config import settings
+    
+    # テストデータの準備（追加のクレームを含む）
+    test_data = {
+        "sub": "testuser",
+        "role": "admin",
+        "device": "mobile"
+    }
+    
+    # トークンの生成
+    token = create_refresh_token(data=test_data)
+    
+    # トークンのデコードと検証
+    payload = jwt.decode(
+        token,
+        settings.jwt_refresh_secret_key,
+        algorithms=[settings.jwt_refresh_algorithm]
+    )
+    
+    # すべてのクレームの検証
+    assert payload["sub"] == "testuser"
+    assert payload["role"] == "admin"
+    assert payload["device"] == "mobile"
+    assert "exp" in payload
 
 
 def test_create_access_token_with_default_expiration():
