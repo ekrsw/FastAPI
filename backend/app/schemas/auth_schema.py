@@ -19,6 +19,4 @@ class Token(BaseModel):
     token_type: str  # トークンのタイプ（例: "bearer"）
     refresh_token: Optional[str] = None  # JWT リフレッシュトークン
 
-    class Config:
-        from_attributes = True
-        model_config = ConfigDict()
+    model_config = ConfigDict(from_attributes=True)

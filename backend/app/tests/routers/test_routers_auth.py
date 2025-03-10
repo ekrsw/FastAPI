@@ -1,68 +1,35 @@
-from datetime import timedelta
-import os
+from httpx import AsyncClient
+import pytest
+from jose import jwt
 
-from fastapi import APIRouter
-from fastapi.security import OAuth2PasswordRequestForm
+from app.models.user import User
+from app.core.config import settings
+from app.tests.conftest import test_admin, test_user, unique_username, client
 
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["auth"],
-    responses={401: {"description": "Unauthorized"}},
-)
-
-@router.post("/token", response_model=schemas.Token)
-async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db)
-) -> schemas.Token:
+@pytest.mark.asyncio
+async def test_login_for_access_token_success(client: AsyncClient):
     """
-    アクセストークンとリフレッシュトークンを発行します。
-
-    このエンドポイントは、ユーザーの認証情報を検証し、
-    有効な場合はアクセストークンとリフレッシュトークンを発行します。
-
-    Parameters
-    ----------
-    form_data : OAuth2PasswordRequestForm
-        ユーザーが提供する認証情報（ユーザー名とパスワード）。
-    db : AsyncSession
-        データベースセッション。
-
-    Returns
-    -------
-    schemas.Token
-        アクセストークン、トークンタイプ、およびリフレッシュトークンを含むレスポンス。
-    
-    Raises
-    ------
-    HTTPException
-        認証情報が不正な場合、401 Unauthorized エラーを返します。
+    正しい認証情報を使用してアクセストークンとリフレッシュトークンを取得できることを確認します。
     """
-    # ユーザーの認証を試みる
-    user = await auth.authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # アクセストークンの有効期限を設定
-    access_token_expires = timedelta(minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30)))
-    access_token = auth.create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+    # テストユーザーの作成
+    username = "testuser"
+    password = "testpassword"
+    new_user = await User.create_user(username=username, plain_password=password)
+
+    # /auth/token エンドポイントにリクエストを送信
+    response = await client.post(
+        "/auth/token",
+        data={"username": username, "password": password}
     )
-    
-    # リフレッシュトークンの有効期限を設定
-    refresh_token_expires = timedelta(minutes=int(os.getenv("REFRESH_TOKEN_EXPIRE_MINUTES", 1440)))
-    refresh_token = auth.create_refresh_token(
-        data={"sub": user.username}, expires_delta=refresh_token_expires
-    )
-    
-    # トークンを返す
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "refresh_token": refresh_token
-    }
+
+    assert response.status_code == 200, f"トークン取得に失敗しました: {response.text}"
+    tokens = response.json()
+    assert "access_token" in tokens, "レスポンスに access_token が含まれていません"
+    assert tokens["token_type"] == "bearer", "トークンタイプが正しくありません"
+    assert "refresh_token" in tokens, "レスポンスに refresh_token が含まれていません"
+
+    # アクセストークンのデコードと検証
+    access_token = tokens["access_token"]
+    payload = jwt.decode(access_token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    assert payload.get("sub") == username, "アクセストークンのペイロードが正しくありません"
