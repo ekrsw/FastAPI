@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core import auth
@@ -89,7 +90,7 @@ async def read_user_by_username(
     指定されたユーザーの情報を取得します。
 
     このエンドポイントは、指定されたユーザーの情報を取得します。
-    認証不要でアクセスできます。
+    認証されたユーザーのみがアクセスできます。
 
     Parameters
     ----------
@@ -103,33 +104,37 @@ async def read_user_by_username(
     Raises
     ------
     HTTPException
-        ユーザーが存在しない場合に404 Not Foundエラーを返します。
+        - ユーザーが存在しない場合に404 Not Foundエラーを返します。
+        - 認証されていない場合に401 Unauthorizedエラーを返します。
     """
     user = await User.get_user_by_username(username)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@router.get("/", response_model=UserResponse)
-async def read_all_users(current_user: User=Depends(auth.get_current_user)) -> UserResponse:
+@router.get("/", response_model=List[UserResponse])
+async def read_all_users(current_user: User=Depends(auth.get_current_user)) -> List[UserResponse]:
     """
     全てのユーザーの情報を取得します。
 
     このエンドポイントは、全てのユーザーの情報を取得します。
-    認証不要でアクセスできます。
+    認証されたユーザーのみがアクセスできます。
 
     Returns
     -------
-    UserResponse
+    List[UserResponse]
         取得した全てのユーザーの詳細を含むレスポンスモデル。
     """
     users = await User.get_all_users()
     if not users:
-        raise HTTPException(status_code=404, detail="Users not found")
-    return users
+        users = []  # 空のリストを返す（404エラーは返さない）
+    return [UserResponse.model_validate(user) for user in users]  # SQLAlchemyモデルをPydanticモデルに変換
 
 @router.put("/{user_id}", response_model=UserResponse)
-async def update_user(user_id: int, username: str, is_admin: bool=None) -> UserResponse:
+async def update_user(
+    user_id: int,
+    username: str,
+    is_admin: bool=None) -> UserResponse:
     """
     指定されたユーザーの情報を更新します。
 

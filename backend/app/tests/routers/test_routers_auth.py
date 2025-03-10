@@ -13,13 +13,12 @@ async def test_login_for_access_token_success(test_user, client: AsyncClient):
     正しい認証情報を使用してアクセストークンとリフレッシュトークンを取得できることを確認します。
     """
     # テストユーザーの作成
-    username, password = test_user
-    await User.create_user(username=str(username), plain_password=str(password))
+    user, password = test_user
 
     # /auth/token エンドポイントにリクエストを送信
     response = await client.post(
         "/auth/token",
-        data={"username": username, "password": password}
+        data={"username": user.username, "password": password}
     )
 
     assert response.status_code == 200, f"トークン取得に失敗しました: {response.text}"
@@ -31,7 +30,7 @@ async def test_login_for_access_token_success(test_user, client: AsyncClient):
     # アクセストークンのデコードと検証
     access_token = tokens["access_token"]
     payload = jwt.decode(access_token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
-    assert payload.get("sub") == str(username), "アクセストークンのペイロードが正しくありません"
+    assert payload.get("sub") == user.username, "アクセストークンのペイロードが正しくありません"
 
 @pytest.mark.asyncio
 async def test_login_for_access_token_invalid_credentials(client: AsyncClient):
@@ -53,13 +52,12 @@ async def test_refresh_access_token_success(test_user, client: AsyncClient):
     正しいリフレッシュトークンを使用して新しいアクセストークンを取得できることを確認します。
     """
     # テストユーザーの作成
-    username, password = test_user
-    await User.create_user(username=str(username), plain_password=str(password))
+    user, password = test_user
 
     # トークン取得
     response = await client.post(
         "/auth/token",
-        data={"username": username, "password": password}
+        data={"username": user.username, "password": password}
     )
     tokens = response.json()
     refresh_token = tokens["refresh_token"]
@@ -78,7 +76,7 @@ async def test_refresh_access_token_success(test_user, client: AsyncClient):
     # 新しいアクセストークンのデコードと検証
     access_token = new_tokens["access_token"]
     payload = jwt.decode(access_token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
-    assert payload.get("sub") == str(username), "新しいアクセストークンのペイロードが正しくありません"
+    assert payload.get("sub") == user.username, "新しいアクセストークンのペイロードが正しくありません"
 
 @pytest.mark.asyncio
 async def test_refresh_access_token_invalid_token(client: AsyncClient):
@@ -100,23 +98,22 @@ async def test_access_protected_route_with_token(test_user, client: AsyncClient)
     取得したアクセストークンを使用して保護されたエンドポイントにアクセスできることを確認します。
     """
     # テストユーザーの作成
-    username, password = test_user
-    await User.create_user(username=str(username), plain_password=str(password))
+    user, password = test_user
 
     # トークン取得
     response = await client.post(
         "/auth/token",
-        data={"username": username, "password": password}
+        data={"username": user.username, "password": password}
     )
     tokens = response.json()
     access_token = tokens["access_token"]
 
     # 保護されたエンドポイントにアクセス
     response = await client.get(
-        f"/users/name/{username}",
+        f"/users/name/{user.username}",
         headers={"Authorization": f"Bearer {access_token}"}
     )
 
     assert response.status_code == 200, f"保護されたエンドポイントへのアクセスに失敗しました: {response.text}"
     data = response.json()
-    assert data["username"] == str(username), "取得したユーザー名が正しくありません"
+    assert data["username"] == user.username, "取得したユーザー名が正しくありません"
