@@ -24,3 +24,12 @@ services:
       - ./backend/docker/postgresql/data:/var/lib/postgresql/test_data
     networks:
       - fastapi_network
+    # リソース制限を追加
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M

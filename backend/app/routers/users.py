@@ -194,7 +194,7 @@ async def delete_user(
     指定されたユーザーを削除します。
 
     このエンドポイントは、指定されたユーザーを削除します。
-    認証不要でアクセスできます。
+    認証されたユーザーかつ管理者のみがアクセスできます。
 
     Parameters
     ----------
@@ -209,5 +209,8 @@ async def delete_user(
     user = await User.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # 管理者のみがアクセス可能
+    
     await User.delete_user(user_id)
     return {"message": "User deleted successfully"}

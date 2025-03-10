@@ -13,6 +13,15 @@ services:
       - /workdir/.next
     networks:
       - fastapi_network
+    # リソース制限を追加
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
       
   db:
     image: postgres:17.4-alpine
@@ -39,6 +48,15 @@ services:
       - ./backend/docker/postgresql/data:/var/lib/postgresql/data
     networks:
       - fastapi_network
+    # リソース制限を追加
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
 
   app:
     container_name: FastAPI_app
@@ -59,8 +77,19 @@ services:
       - "${API_PORT}"
     volumes:
       - ./backend:/workdir
+      # ボリュームマウントの権限を設定
+      - /workdir/.pytest_cache
     networks:
       - fastapi_network
+    # リソース制限を追加
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
 networks:
   fastapi_network:
@@ -69,3 +98,4 @@ networks:
 
 volumes:
   postgres_data:
+    name: fastapi_postgres_data
