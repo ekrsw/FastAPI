@@ -36,6 +36,7 @@ python -m pytest -v
 
 ```
 docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit
+pytest -m pytest [テストしたいモジュール]
 ```
 
 #### マイグレーションファイルの作成

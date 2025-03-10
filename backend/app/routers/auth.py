@@ -1,15 +1,21 @@
 from datetime import timedelta
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from jose import JWTError
 
-from app.core import auth, config
+from app.core import auth
+from app.core.config import settings
+from app.models.user import User
 from app.schemas import auth_schema
 
 
-ACCESS_TOKEN_EXPIRE_MINUTE = config.settings.jwt_access_token_expire_minutes
-REFRESH_TOKEN_EXPIRE_MINUTE = config.settings.jwt_refresh_token_expire_minutes
+ACCESS_TOKEN_EXPIRE_MINUTE = settings.jwt_access_token_expire_minutes
+REFRESH_TOKEN_EXPIRE_MINUTE = settings.jwt_refresh_token_expire_minutes
+REFRESH_SECRET_KEY = settings.jwt_refresh_secret_key
+REFRESH_ALGORITHM = settings.jwt_refresh_algorithm
+
 
 router = APIRouter(
     prefix="/auth",
@@ -69,3 +75,65 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         "token_type": "bearer",
         "refresh_token": refresh_token
     }
+
+@router.post("/refresh", response_model=auth_schema.Token)
+async def refresh_access_token(refresh_token: str = Header(..., alias="Refresh-Token")) -> auth_schema.Token:
+    """
+    リフレッシュトークンを使用して新しいアクセストークンを発行します。
+
+    Parameters
+    ----------
+    refresh_token : str
+        ヘッダーから取得したリフレッシュトークン。
+
+    Returns
+    -------
+    schemas.Token
+        新しいアクセストークンとトークンタイプを含むレスポンス。
+    
+    Raises
+    ------
+    HTTPException
+        リフレッシュトークンが無効な場合、401 Unauthorized エラーを返します。
+    """
+    try:
+        # リフレッシュトークンを検証 
+        payload = auth.decode_token(
+            refresh_token, 
+            REFRESH_SECRET_KEY, 
+            [REFRESH_ALGORITHM]
+        )
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # ユーザーの存在確認
+        user = await User.get_user_by_username(username)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # 新しいアクセストークンを生成
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTE)
+        access_token = auth.create_access_token(
+            data={"sub": username}, expires_delta=access_token_expires
+        )
+        
+        # トークンを返す
+        return {
+            "access_token": access_token,
+            "token_type": "bearer"
+        }
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )

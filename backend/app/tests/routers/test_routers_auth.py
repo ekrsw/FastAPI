@@ -32,3 +32,50 @@ async def test_login_for_access_token_success(test_user, client: AsyncClient):
     access_token = tokens["access_token"]
     payload = jwt.decode(access_token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
     assert payload.get("sub") == str(username), "アクセストークンのペイロードが正しくありません"
+
+@pytest.mark.asyncio
+async def test_login_for_access_token_invalid_credentials(client: AsyncClient):
+    """
+    無効な認証情報でトークン取得が失敗することを確認します。
+    """
+    # 存在しないユーザーでリクエストを送信
+    response = await client.post(
+        "/auth/token",
+        data={"username": "invaliduser", "password": "invalidpassword"}
+    )
+
+    assert response.status_code == 401, "無効な認証情報で 401 エラーが返されるべきです"
+    assert response.json()["detail"] == "Incorrect username or password", "エラーメッセージが正しくありません"
+
+@pytest.mark.asyncio
+async def test_refresh_access_token_success(test_user, client: AsyncClient):
+    """
+    正しいリフレッシュトークンを使用して新しいアクセストークンを取得できることを確認します。
+    """
+    # テストユーザーの作成
+    username, password = test_user
+    await User.create_user(username=str(username), plain_password=str(password))
+
+    # トークン取得
+    response = await client.post(
+        "/auth/token",
+        data={"username": username, "password": password}
+    )
+    tokens = response.json()
+    refresh_token = tokens["refresh_token"]
+
+    # /auth/refresh エンドポイントにリクエストを送信
+    response = await client.post(
+        "/auth/refresh",
+        headers={"Refresh-Token": refresh_token}
+    )
+
+    assert response.status_code == 200, f"アクセストークンのリフレッシュに失敗しました: {response.text}"
+    new_tokens = response.json()
+    assert "access_token" in new_tokens, "レスポンスに新しい access_token が含まれていません"
+    assert new_tokens["token_type"] == "bearer", "トークンタイプが正しくありません"
+
+    # 新しいアクセストークンのデコードと検証
+    access_token = new_tokens["access_token"]
+    payload = jwt.decode(access_token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    assert payload.get("sub") == str(username), "新しいアクセストークンのペイロードが正しくありません"
