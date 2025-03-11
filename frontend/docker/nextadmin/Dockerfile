@@ -6,13 +6,13 @@ WORKDIR /workdir
 RUN apk add --no-cache bash
 
 # 依存関係のインストール（開発環境用）
-COPY frontend/admin/package*.json ./
+COPY frontend/nextadmin/package*.json ./
 RUN rm -rf node_modules package-lock.json && \
     npm install --legacy-peer-deps && \
     npm cache clean --force
 
 # アプリケーションコードのコピー
-COPY frontend/admin ./
+COPY frontend/nextadmin ./
 
 # 初回ビルドの実行
 RUN npm run build
