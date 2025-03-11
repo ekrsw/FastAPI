@@ -45,7 +45,7 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    router.push('/admin/login');
+    router.push('/admin/logout');
   };
 
   return (
