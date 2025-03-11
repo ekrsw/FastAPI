@@ -1,4 +1,4 @@
-export default function Home() {
+export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
@@ -18,6 +18,7 @@ export default function Home() {
                 name="username"
                 type="text"
                 required
+                autoComplete="username"
                 className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="ユーザー名"
               />
@@ -31,6 +32,7 @@ export default function Home() {
                 name="password"
                 type="password"
                 required
+                autoComplete="current-password"
                 className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="パスワード"
               />
