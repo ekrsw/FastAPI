@@ -5,7 +5,6 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
 });
 
 // リクエストインターセプター
@@ -33,7 +32,7 @@ export const login = async (username: string, password: string): Promise<LoginRe
   data.append('username', username);
   data.append('password', password);
 
-  const response = await api.post<LoginResponse>('/auth/login', data, {
+  const response = await api.post<LoginResponse>('/auth/token', data, {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
     }
@@ -42,7 +41,15 @@ export const login = async (username: string, password: string): Promise<LoginRe
 };
 
 export const getCurrentUser = async (): Promise<User> => {
-  const response = await api.get<User>('/auth/me');
+  // ログインユーザー自身の情報を取得するため、/users/name/{username}エンドポイントを使用
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('認証トークンがありません');
+  
+  // JWTトークンからユーザー名を取得
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  const username = payload.sub;
+  
+  const response = await api.get<User>(`/users/name/${username}`);
   return response.data;
 };
 
