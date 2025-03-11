@@ -5,17 +5,21 @@ WORKDIR /workdir
 # bashをインストール
 RUN apk add --no-cache bash
 
-# 依存関係のインストール（キャッシュを効率化するために分離）
+# 依存関係のインストール（開発環境用）
 COPY frontend/admin/package*.json ./
-RUN npm ci --only=production && \
+RUN rm -rf node_modules package-lock.json && \
+    npm install --legacy-peer-deps && \
     npm cache clean --force
 
 # アプリケーションコードのコピー
 COPY frontend/admin ./
 
+# 初回ビルドの実行
+RUN npm run build
+
 ENV HOSTNAME "0.0.0.0"
 ENV PORT 3000
-ENV NODE_ENV production
+ENV NODE_ENV development
 
 # 非rootユーザーを作成して実行（セキュリティ向上）
 RUN adduser -D nextuser && \
@@ -23,5 +27,5 @@ RUN adduser -D nextuser && \
 
 EXPOSE 3000
 
-# 本番環境用のコマンド
-CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
+# 開発環境用のコマンド
+CMD ["npm", "run", "dev"]
