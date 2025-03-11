@@ -9,6 +9,7 @@ RUN apk add --no-cache bash
 COPY frontend/nextadmin/package*.json ./
 RUN rm -rf node_modules package-lock.json && \
     npm install --legacy-peer-deps && \
+    npm install @types/react @types/node && \
     npm cache clean --force
 
 # アプリケーションコードのコピー
