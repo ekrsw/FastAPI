@@ -5,7 +5,8 @@ class AsyncContextManager:
     async def __aenter__(self):
         db = Database()
         await db.init()
-        self.session = await db.connect_db()
+        session_factory = await db.connect_db()
+        self.session = session_factory()
         return self.session
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
