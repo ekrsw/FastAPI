@@ -1,6 +1,7 @@
 from passlib.context import CryptContext
 from sqlalchemy import Boolean, Column, String, Select
 from typing import Optional
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from .base import BaseDatabase
 from app.db.session import AsyncContextManager
