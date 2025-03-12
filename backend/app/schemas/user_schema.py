@@ -9,6 +9,18 @@ class UserResponse(BaseModel):
     
     model_config = ConfigDict(from_attributes=True)
 
+class UserPasswordSchema(BaseModel):
+    password: str
+
+    @field_validator("password")
+    def password_valid(cls, password):
+        if password is not None:
+            if not password.strip():
+                raise ValueError("password must not be empty")
+            if len(password) < 8 or len(password) > 30:
+                raise ValueError("password must be between 8 and 30 characters")
+        return password
+
 class UserSchema(BaseModel):
     username: str
     password: str

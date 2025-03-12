@@ -5,7 +5,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from .base import BaseDatabase
 from app.db.session import AsyncContextManager
-from app.schemas.user_schema import UserSchema
+from app.schemas.user_schema import UserSchema, UserPasswordSchema
 
 
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
@@ -26,7 +26,8 @@ class User(BaseDatabase):
     @staticmethod
     async def set_password(plain_password: str) -> str:
         """パスワードをハッシュ化して返す"""
-        return pwd_context.hash(plain_password)
+        cleaned_password = UserPasswordSchema(password=plain_password).password
+        return pwd_context.hash(cleaned_password)
     
     @classmethod
     async def create_user(cls, username: str, plain_password: Optional[str]=None, is_admin: Optional[bool]=False):
