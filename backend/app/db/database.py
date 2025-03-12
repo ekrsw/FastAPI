@@ -18,10 +18,17 @@ Base = declarative_base()
 
 class Database:
     def __init__(self):
-        """非同期エンジンの作成"""
+        """非同期エンジンの作成, セッションの作成"""
         self.engine = create_async_engine(
             DATABASE_URL,
             echo=True,
+        )
+        self.async_session_factory = sessionmaker(
+            self.engine,
+            class_=AsyncSession,
+            autocommit=False,
+            autoflush=False,
+            expire_on_commit=False
         )
     
     async def init(self):
@@ -32,11 +39,8 @@ class Database:
     
     async def connect_db(self):
         """非同期セッションの作成"""
-        async_session = sessionmaker(
-            self.engine,
-            class_=AsyncSession,
-            autocommit=False,
-            autoflush=False,
-            expire_on_commit=False
-        )
-        return async_session()
+        return self.async_session_factory
+
+    def get_session_factory(self):
+        """セッションファクトリーの取得。awaitする必要なし"""
+        return self.async_session_factory
