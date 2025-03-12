@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     api_host: str = Field(default="localhost", json_schema_extra={"env": "API_HOST"})
     api_port: int = Field(default=8000, json_schema_extra={"env": "API_PORT"})
 
+    # ADMIN設定
+    admin_host: str = Field(default="localhost", json_schema_extra={"env": "ADMIN_HOST"})
+    admin_port: int = Field(default=8001, json_schema_extra={"env": "ADMIN_PORT"})
+    title: str = "FastAPI Sample"
+    version: str = "0.1.0"
+    debug: bool = False
+
     # JWT設定
     jwt_secret_key: str = Field(default="my_secret_key", json_schema_extra={"env": "JWT_SECRET_KEY"})
     jwt_algorithm: str = Field(default="HS256", json_schema_extra={"env": "JWT_ALGORITHM"})

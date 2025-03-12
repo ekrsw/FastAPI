@@ -91,6 +91,39 @@ services:
           cpus: '0.25'
           memory: 256M
 
+  admin:
+    container_name: Admin
+    build:
+      context: .
+      dockerfile: ./backend/docker/admin/Dockerfile
+    restart: always
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://${DATABASE_USER}:${DATABASE_PASSWORD}@db:${DATABASE_PORT}/${DATABASE_NAME}"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${ADMIN_PORT}:8000"
+    expose:
+      - "${ADMIN_PORT}"
+    volumes:
+      - ./backend:/workdir
+      # ボリュームマウントの権限を設定
+      - /workdir/.pytest_cache
+    networks:
+      - fastapi_network
+    # リソース制限を追加
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
 networks:
   fastapi_network:
     name: fastapi_network
