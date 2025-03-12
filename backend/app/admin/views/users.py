@@ -43,4 +43,5 @@ class UserAdminView(ModelView, model=User):  # type: ignore
                 data["hashed_password"] = model.hashed_password
                 return
         # ハッシュ処理
+        # Userクラスのset_passwordメソッドにてUserPasswordSchemaでValidationを行う
         data["hashed_password"] = await User.set_password(data["hashed_password"])
