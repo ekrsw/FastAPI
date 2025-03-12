@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     # ADMIN設定
     admin_host: str = Field(default="localhost", json_schema_extra={"env": "ADMIN_HOST"})
     admin_port: int = Field(default=8001, json_schema_extra={"env": "ADMIN_PORT"})
-    title: str = "FastAPI Sample"
+    title: str = "FastAPI Admin"
     version: str = "0.1.0"
     debug: bool = False
 

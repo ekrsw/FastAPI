@@ -11,7 +11,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     column_searchable_list = [User.id, User.username, User.is_admin]
     form_columns = [
         User.id,
-        User.usernname,
+        User.username,
         User.is_admin,
         User.hashed_password,
     ]

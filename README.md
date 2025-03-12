@@ -74,3 +74,7 @@ docker exec -it Postgres_db /bin/bash
 ```
 psql -h [host名] -p [ポート番号] -U [ユーザー名] -d [データベース名]
 ```
+
+### 管理画面
+
+http://localhost:8001/admin/login

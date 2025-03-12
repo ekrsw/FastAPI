@@ -7,7 +7,7 @@ from app.admin.core.auth import AdminAuth
 from app.admin.views.users import UserAdminView
 from app.core.config import settings
 from app.db.database import Database
-from app.settings import settings
+
 
 """ 管理画面用のmain処理 """
 
@@ -30,12 +30,8 @@ admin_manager = Admin(
     title="管理画面",
     session_maker=async_session_factory,  # SQLAlchemyのセッションを作成する関数
     # 認証用のクラスを指定
-    authentication_backend=AdminAuth(
-        secret_key=settings.jwt_secret_key,
-        algorithm=settings.jwt_algorithm
-        ),
+    authentication_backend=AdminAuth(secret_key=settings.jwt_secret_key),
 )
-
 
 # 管理画面のviewを追加する
 admin_manager.add_view(UserAdminView)
