@@ -88,3 +88,29 @@ class User(BaseDatabase):
             hashed_password = await cls.set_password(plain_password)
             user.hashed_password = hashed_password
             session.add(user)
+    
+    @classmethod
+    async def create_or_update_user(cls, user_id: int, username: str, plain_password: str, is_admin: bool = False):
+        """ユーザーを作成または更新する"""
+        async with AsyncContextManager() as session:
+            user = await cls.get_user_by_id(user_id)
+            if user:
+                # 既存ユーザーの更新
+                user.username = username
+                user.is_admin = is_admin
+                hashed_password = await cls.set_password(plain_password)
+                user.hashed_password = hashed_password
+                session.add(user)
+                create_or_update = True
+                new_or_updated_user = user # 更新されたユーザー
+            else:
+                # 新規ユーザーの作成
+                user_schema = UserSchema(username=username, password=plain_password)
+                hashed_password = await cls.set_password(user_schema.password)
+                new_user = cls(id=user_id, username=user_schema.username, hashed_password=hashed_password, is_admin=is_admin)
+                session.add(new_user)
+                create_or_update = False
+                new_or_updated_user = new_user # 新規作成されたユーザー
+        return new_or_updated_user, create_or_update
+        
+
