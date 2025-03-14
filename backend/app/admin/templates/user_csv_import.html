@@ -1,0 +1,42 @@
+{% extends "sqladmin/layout.html" %}
+{% block content %}
+<div class="col-12">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">{{ view.name_plural }}</h3>
+    </div>
+    <div class="card-body border-bottom py-3">
+      <h3>アップロードするCSVを選択してください。複数ファイルを同時に指定できます。</h3>
+      <form action="/admin/{{view.identity}}" method="POST"
+        enctype="multipart/form-data">
+        <fieldset class="form-fieldset">
+          <input multiple="multiple" type="file" name="files" id="files" accept=".csv">
+        </fieldset>
+        <div class="col-md-6">
+          <div class="btn-group flex-wrap" data-toggle="buttons">
+            <input type="submit" name="save" value="登録" class="btn">
+          </div>
+        </div>
+        <p>
+        <div class="row">
+          {% if success_count %}
+          <div class="alert alert-success" role="alert">{{ description }}</div>
+          <div class="alert alert-success" role="alert">{{ success_count }}件登録されました（重複も含む）</div>
+          {% endif %}
+          {% if error_count %}
+          <div class="alert alert-danger" role="alert">{{ error_count }}件のエラーが発生しました</div>
+            {% if error_descriptions %}
+            <div class="alert alert-danger" role="alert">
+              エラー詳細<br>
+              {% for error_description in error_descriptions %}
+              {{ error_description }}<br>
+              {% endfor %}
+            </div>
+            {% endif %}
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
