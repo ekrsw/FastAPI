@@ -41,7 +41,7 @@ class User(BaseDatabase):
         return new_user
     
     @classmethod
-    async def get_all_users(cls):
+    async def get_all_users(cls: Type[T]):
         """全てのユーザーを取得する"""
         async with AsyncContextManager() as session:
             result = await session.execute(Select(cls))
@@ -49,7 +49,7 @@ class User(BaseDatabase):
         return users
 
     @classmethod
-    async def get_user_by_id(cls, user_id: int):
+    async def get_user_by_id(cls: Type[T], user_id: int):
         """ユーザーIDからユーザーを取得する"""
         async with AsyncContextManager() as session:
             result = await session.execute(Select(cls).where(cls.id == user_id))
@@ -57,32 +57,57 @@ class User(BaseDatabase):
         return user
     
     @classmethod
-    async def get_user_by_username(cls, username: str):
+    async def get_user_by_username(cls: Type[T], username: str):
         """ユーザー名からユーザーを取得する"""
         async with AsyncContextManager() as session:
             result = await session.execute(Select(cls).where(cls.username == username))
             user = result.scalar_one_or_none()
         return user
     
+    '''
     @classmethod
-    async def update_user(cls, user_id: int, username: str, is_admin: Optional[bool]=None):
+    async def update_user(cls: Type[T], user_id: int, username: str, is_admin: Optional[bool]=None):
         """ユーザー情報を更新する"""
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id)
             user.username = username
             if is_admin is not None:  # is_adminがNoneでない場合のみ更新
                 user.is_admin = is_admin
-            session.add(user)
+            session.add(user)'''
+    
+    # 仮
+    @classmethod
+    async def update_user(cls: Type[T], *, db_obj: T, obj_in: Dict[str, Any]) -> T:
+        """汎用ユーザー情報を更新する"""
+        async with AsyncContextManager() as session:
+            # 現在のデータを取得
+            obj_data = {c.name: getattr(db_obj, c.name) for c in db_obj.__table__.columns}
+            
+            # パスワードを特別に処理
+            if "password" in obj_in:
+                hashed_password = cls.set_password(obj_in["password"])
+                del obj_in["password"]
+                update_data = {**obj_in, "hashed_password": hashed_password}
+            else:
+                update_data = obj_in.copy()
+            
+            # 動的にフィールドを更新
+            for field, value in update_data.items():
+                if hasattr(db_obj, field):
+                    setattr(db_obj, field, value)
+            
+            session.add(db_obj)
+        return db_obj
     
     @classmethod
-    async def delete_user(cls, user_id: int):
+    async def delete_user(cls: Type[T], user_id: int):
         """ユーザーを削除する"""
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id)
             await session.delete(user)
     
     @classmethod
-    async def update_password(cls, user_id: int, plain_password: Optional[str]):
+    async def update_password(cls: Type[T], user_id: int, plain_password: Optional[str]):
         """パスワードを更新する"""
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id)
@@ -91,7 +116,7 @@ class User(BaseDatabase):
             session.add(user)
     
     @classmethod
-    async def create_or_update_user(cls, user_id: int, username: str, plain_password: str, is_admin: bool = False):
+    async def create_or_update_user(cls: Type[T], user_id: int, username: str, plain_password: str, is_admin: bool = False):
         """ユーザーを作成または更新する"""
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id)
