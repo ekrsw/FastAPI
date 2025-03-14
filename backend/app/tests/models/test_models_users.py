@@ -11,7 +11,11 @@ from app.tests.conftest import test_admin, test_user, unique_username
 async def test_create_user(unique_username):
     """ユーザーを作成し、フィールドが正しく設定されているかを確認"""
     password = "test_password"
-    new_user = await User.create_user(username=unique_username, plain_password=password)
+    new_user = await User.create_user(obj_in={
+        "username": unique_username,
+        "password": password,
+        "is_admin": False
+        })
 
     assert new_user.id is not None, "ユーザーIDが設定されているか"
     assert new_user.username == unique_username, "ユーザー名が正しいか"
@@ -25,7 +29,11 @@ async def test_create_user(unique_username):
 async def test_create_admin_user(unique_username):
     """管理者ユーザーを作成し、is_adminフラグが正しく設定されているかを確認"""
     password = "admin_password123"
-    admin_user = await User.create_user(username=unique_username, plain_password=password, is_admin=True)
+    admin_user = await User.create_user(obj_in={
+        "username": unique_username,
+        "password": password,
+        "is_admin": True
+        })
     
     exist_user = await User.get_user_by_username(unique_username)
     exist_user = await User.get_user_by_username(unique_username)

@@ -149,11 +149,11 @@ async def test_read_all_users_success(test_user, client: AsyncClient):
     user, password = test_user
     
     # 追加のテストユーザーを作成
-    additional_user = await User.create_user(
-        username="additional_test_user",
-        plain_password="test_password123",
-        is_admin=False
-    )
+    additional_user = await User.create_user(obj_in={
+        "username": "additional_test_user",
+        "password": "test_password123",
+        "is_admin": False
+    })
     
     # /auth/token エンドポイントでアクセストークンを取得
     token_response = await client.post(
@@ -359,11 +359,11 @@ async def test_update_other_user_forbidden(test_user, client: AsyncClient):
     """
     # 2人のテストユーザーを作成
     user1, password1 = test_user
-    user2 = await User.create_user(
-        username="another_test_user",
-        plain_password="test_password123",
-        is_admin=False
-    )
+    user2 = await User.create_user(obj_in={
+        "username": "another_test_user",
+        "password": "test_password123",
+        "is_admin": False
+    })
     
     # user1のアクセストークンを取得
     token_response = await client.post(
@@ -491,11 +491,11 @@ async def test_delete_user_forbidden(test_user, client: AsyncClient):
     user, password = test_user
     
     # 削除対象のユーザーを作成
-    target_user = await User.create_user(
-        username="user_to_delete",
-        plain_password="test_password123",
-        is_admin=False
-    )
+    target_user = await User.create_user(obj_in={
+        "username": "user_to_delete",
+        "password": "test_password123",
+        "is_admin": False
+    })
     
     # 一般ユーザーのアクセストークンを取得
     token_response = await client.post(

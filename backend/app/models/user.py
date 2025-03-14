@@ -1,9 +1,10 @@
+from typing import List, Optional, Dict, Any, Type, TypeVar, Union
 from passlib.context import CryptContext
 from sqlalchemy import Boolean, Column, String, Select
 from typing import Optional
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from .base import BaseDatabase
+from .base import BaseDatabase, T
 from app.db.session import AsyncContextManager
 from app.schemas.user_schema import UserSchema, UserPasswordSchema
 
@@ -30,12 +31,12 @@ class User(BaseDatabase):
         return pwd_context.hash(cleaned_password)
     
     @classmethod
-    async def create_user(cls, username: str, plain_password: Optional[str]=None, is_admin: Optional[bool]=False):
+    async def create_user(cls: Type[T], *, obj_in: Dict[str, Any]) -> T:
         """ユーザーを作成する"""
         async with AsyncContextManager() as session:
-            user_schema = UserSchema(username=username, password=plain_password)
+            user_schema = UserSchema(**obj_in)
             hashed_password = await cls.set_password(user_schema.password)
-            new_user = cls(username=user_schema.username, hashed_password=hashed_password, is_admin=is_admin)
+            new_user = cls(username=user_schema.username, hashed_password=hashed_password, is_admin=user_schema.is_admin)
             session.add(new_user)
         return new_user
     

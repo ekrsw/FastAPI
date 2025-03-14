@@ -44,7 +44,11 @@ async def create_user(username: str, password: str, is_admin: bool=False) -> Use
     if exit_user:
         # 既存のユーザーが存在する場合はエラーを返す
         raise HTTPException(status_code=400, detail="Username already exists")
-    new_user = await User.create_user(username, password, is_admin)
+    new_user = await User.create_user(obj_in={
+        "username": username,
+        "password": password,
+        "is_admin": is_admin
+        })
     return new_user
 
 @router.get("/{user_id}", response_model=UserResponse)

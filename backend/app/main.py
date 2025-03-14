@@ -33,11 +33,11 @@ async def lifespan(app: FastAPI):
         # 既存の管理者ユーザーを確認
         existing_admin = await User.get_user_by_username(admin_username)
         if not existing_admin:
-            await User.create_user(
-                username=admin_username,
-                plain_password=admin_password,
-                is_admin=True
-            )
+            await User.create_user(obj_in={
+                "username": admin_username,
+                "password": admin_password,
+                "is_admin": True
+            })
             logger.info(f"Initial admin user '{admin_username}' created successfully")
         else:
             logger.info(f"Admin user '{admin_username}' already exists")

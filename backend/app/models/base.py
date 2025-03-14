@@ -2,9 +2,12 @@ import datetime
 
 from sqlalchemy import Column, Integer, DateTime
 from sqlalchemy.sql import func
+from typing import TypeVar
 
 from app.db.database import Base
 
+
+T = TypeVar('T', bound='BaseDatabase')
 
 class BaseDatabase(Base):
     __abstract__ = True
