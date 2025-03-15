@@ -23,21 +23,17 @@ async def create_user(user_in: UserCreate) -> UserResponse:
 
     Parameters
     ----------
-    username : str
-        作成するユーザー名。
-    password : 
-        作成するユーザーのパスワード。
-    is_admin : bool
-        作成するユーザーの管理者権限の有無。デフォルトはFalse。
+    user_in : UserCreate
+        作成するユーザーの情報。
     Returns
     -------
     UserResponse
-        取得したユーザーの詳細を含むレスポンスモデル。
+        作成したユーザーの詳細を含むレスポンスモデル。
 
     Raises
     ------
     HTTPException
-        ユーザーが存在しない場合に404 Not Foundエラーを返します。
+        ユーザー名が既に存在する場合に400 Bad Requestエラーを返します。
     """
     # usernameで既存のユーザーを取得
     exit_user = await User.get_user_by_username(username=user_in.username)
@@ -130,29 +126,25 @@ async def read_all_users(current_user: User=Depends(auth.get_current_user)) -> L
         users = []  # 空のリストを返す（404エラーは返さない）
     return [UserResponse.model_validate(user) for user in users]  # SQLAlchemyモデルをPydanticモデルに変換
 
-from fastapi import Body
-'''@router.put("/{user_id}", response_model=UserResponse)
-async def update_user(
-    user_id: int,
-    username: str = Body(...),
-    is_admin: bool = Body(None),
+@router.put("/me", response_model=UserResponse)
+async def update_user_me(
+    *,
+    user_in: UserUpdate,
     current_user: User = Depends(auth.get_current_user)
     ) -> UserResponse:
     """
-    指定されたユーザーの情報を更新します。
+    現在のユーザー情報を更新します。
 
-    このエンドポイントは、指定されたユーザーの情報を更新します。
-    認証されたユーザーかつ自分自身か、管理者のみがアクセスできます。
-    管理者権限の変更は管理者のみが実行できます。
+    このエンドポイントは、現在認証されているユーザーの情報を更新します。
+    管理者権限の変更はできません。
 
     Parameters
     ----------
-    user_id : int
-        更新するユーザーのID。
-    username : str
-        更新するユーザーの名前。
-    is_admin : bool
-        更新するユーザーの管理者権限の有無。デフォルトはNone。
+    user_in : UserUpdate
+        更新するユーザー情報。
+    current_user : User
+        現在認証されているユーザー。
+
     Returns
     -------
     UserResponse
@@ -161,71 +153,73 @@ async def update_user(
     Raises
     ------
     HTTPException
-        ユーザーが存在しない場合に404 Not Foundエラーを返します。
+        管理者権限の変更を試みた場合に403 Forbiddenエラーを返します。
     """
-    user = await User.get_user_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # 自分自身か管理者のみがアクセス可能
-    if user_id != current_user.id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=403,
-            detail="Not enough permissions. Only the user themselves or an admin can update user information. "
-        )
-
-    # 管理者権限の変更は管理者のみが実行可能
-    if is_admin is not None and is_admin != user.is_admin and not current_user.is_admin:
+    # 管理者権限の変更を防ぐ
+    if user_in.is_admin is not None and user_in.is_admin != current_user.is_admin:
         raise HTTPException(
             status_code=403,
             detail="Not enough permissions. Only admins can change admin privileges."
         )
     
-    await User.update_user(obj_in={
-        "id": user_id,
-        "username": username,
-        "is_admin": is_admin
-        })
-    return await User.get_user_by_id(user_id)'''
-
-# 仮
-@router.put("/me", response_model=UserResponse)
-async def update_user_me(
-    *,
-    user_in: UserUpdate,
-    current_user: User = Depends(auth.get_current_user)
-    ) -> Any:
-    """現在のユーザー情報更新"""
-    user = await User.update_from_schema(db_obj=current_user, schema=user_in)
-    return user
+    # 更新実行
+    updated_user = await User.update_from_schema(db_obj=current_user, schema=user_in)
+    return updated_user
 
 @router.put("/{user_id}", response_model=UserResponse)
-def update_user(
+async def update_user(
     *,
     user_id: int,
     user_in: UserUpdate,
     current_user: User = Depends(auth.get_current_user)
-    ) -> Any:
+    ) -> UserResponse:
     """
-    指定IDのユーザー情報を更新（管理者のみ）
+    指定されたユーザーの情報を更新します。
+
+    このエンドポイントは、指定されたユーザーの情報を更新します。
+    管理者のみがアクセスできます。
+
+    Parameters
+    ----------
+    user_id : int
+        更新するユーザーのID。
+    user_in : UserUpdate
+        更新するユーザー情報。
+    current_user : User
+        現在認証されているユーザー。
+
+    Returns
+    -------
+    UserResponse
+        更新したユーザーの詳細を含むレスポンスモデル。
+
+    Raises
+    ------
+    HTTPException
+        - ユーザーが存在しない場合に404 Not Foundエラーを返します。
+        - 管理者でない場合に403 Forbiddenエラーを返します。
     """
-    user = User.get_user_by_id(user_id=user_id)
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        )
-    
-    # 管理者権限の変更は管理者のみが実行可能
+    # 管理者権限チェック
     if not current_user.is_admin:
         raise HTTPException(
             status_code=403,
-            detail="Not enough permissions. Only admins can change admin privileges."
+            detail="Not enough permissions. Only admins can update other users."
         )
     
-    # PydanticスキーマでUserオブジェクトを更新
-    user = User.update_from_schema(db_obj=user, schema=user_in)
-    return user
+    # ユーザー存在チェック
+    user = await User.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+    
+    # 更新実行
+    try:
+        updated_user = await User.update_from_schema(db_obj=user, schema=user_in)
+        return updated_user
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 @router.delete("/{user_id}")
 async def delete_user(
@@ -243,20 +237,29 @@ async def delete_user(
     user_id : int
         削除するユーザーのID。
 
+    Returns
+    -------
+    dict
+        削除成功メッセージを含む辞書。
+
     Raises
     ------
     HTTPException
-        ユーザーが存在しない場合に404 Not Foundエラーを返します。
+        - ユーザーが存在しない場合に404 Not Foundエラーを返します。
+        - 管理者でない場合に403 Forbiddenエラーを返します。
     """
+    # ユーザー存在チェック
     user = await User.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # 管理者のみがアクセス可能
+    # 管理者権限チェック
     if not current_user.is_admin:
         raise HTTPException(
             status_code=403,
             detail="Not enough permissions. Only admins can delete users."
         )
+    
+    # 削除実行
     await User.delete_user(user_id)
     return {"message": "User deleted successfully"}

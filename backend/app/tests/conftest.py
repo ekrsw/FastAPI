@@ -20,7 +20,8 @@ async def test_user(unique_username):
     user = await User.create_user(obj_in={
         "username": unique_username,
         "password": password,
-        "is_admin": False})
+        "is_admin": False
+    })
     return user, password
 
 @pytest_asyncio.fixture

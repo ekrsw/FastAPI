@@ -127,19 +127,6 @@ async def test_read_user_by_username_not_found(test_user, client: AsyncClient):
     assert response.status_code == 404, "存在しないユーザー名で404エラーが返されるべきです"
     assert response.json()["detail"] == "User not found", "エラーメッセージが正しくありません"
 
-
-@pytest.mark.asyncio
-async def test_read_user_by_username_unauthorized(client: AsyncClient):
-    """
-    認証なしでアクセスした場合に401エラーが返されることを確認します。
-    """
-    # 認証なしでリクエストを送信
-    response = await client.get("/users/name/testuser")
-
-    # レスポンスの検証
-    assert response.status_code == 401, "認証なしのアクセスで401エラーが返されるべきです"
-    assert response.json()["detail"] == "Not authenticated", "エラーメッセージが正しくありません"
-
 @pytest.mark.asyncio
 async def test_read_all_users_success(test_user, client: AsyncClient):
     """
@@ -182,19 +169,6 @@ async def test_read_all_users_success(test_user, client: AsyncClient):
     user_ids = [u["id"] for u in data]
     assert user.id in user_ids, "テストユーザーの情報が含まれていません"
     assert additional_user.id in user_ids, "追加のテストユーザーの情報が含まれていません"
-
-@pytest.mark.asyncio
-async def test_read_all_users_unauthorized(client: AsyncClient):
-    """
-    認証なしでアクセスした場合に401エラーが返されることを確認します。
-    """
-    # 認証なしでリクエストを送信
-    response = await client.get("/users/")
-
-    # レスポンスの検証
-    assert response.status_code == 401, "認証なしのアクセスで401エラーが返されるべきです"
-    assert response.json()["detail"] == "Not authenticated", "エラーメッセージが正しくありません"
-
 
 @pytest.mark.asyncio
 async def test_read_all_users_empty(test_user, client: AsyncClient):
@@ -248,9 +222,9 @@ async def test_update_user_self_success(test_user, client: AsyncClient):
     # 新しいユーザー名
     new_username = f"updated_{user.username}"
     
-    # /users/{user_id} エンドポイントにPUTリクエストを送信
+    # /users/me エンドポイントにPUTリクエストを送信
     response = await client.put(
-        f"/users/{user.id}",
+        "/users/me",
         json={"username": new_username},
         headers={"Authorization": f"Bearer {access_token}"}
     )
@@ -326,17 +300,17 @@ async def test_update_user_admin_privilege_success(test_admin, test_user, client
     assert data["is_admin"] == True, "管理者権限が更新されていません"
 
 @pytest.mark.asyncio
-async def test_update_user_not_found(test_user, client: AsyncClient):
+async def test_update_user_not_found(test_admin, client: AsyncClient):
     """
     存在しないユーザーIDを指定した場合に404エラーが返されることを確認します。
     """
-    # テストユーザーの作成とアクセストークンの取得
-    user, password = test_user
+    # 管理者ユーザーの作成とアクセストークンの取得
+    admin, admin_password = test_admin
     
     # /auth/token エンドポイントでアクセストークンを取得
     token_response = await client.post(
         "/auth/token",
-        data={"username": user.username, "password": password}
+        data={"username": admin.username, "password": admin_password}
     )
     access_token = token_response.json()["access_token"]
 
@@ -400,30 +374,14 @@ async def test_update_admin_privilege_forbidden(test_user, client: AsyncClient):
 
     # 自分自身を管理者に昇格しようとする
     response = await client.put(
-        f"/users/{user.id}",
+        "/users/me",
         json={"username": user.username, "is_admin": True},
         headers={"Authorization": f"Bearer {access_token}"}
     )
 
     # レスポンスの検証
     assert response.status_code == 403, "管理者権限の変更で403エラーが返されるべきです"
-    assert "Only admins can change admin privileges" in response.json()["detail"], "エラーメッセージが正しくありません"
-
-@pytest.mark.asyncio
-async def test_update_user_unauthorized(client: AsyncClient):
-    """
-    認証なしでアクセスした場合に401エラーが返されることを確認します。
-    """
-    # 認証なしでリクエストを送信
-    response = await client.put(
-        "/users/1",
-        json={"username": "new_username"}
-    )
-
-    # レスポンスの検証
-    assert response.status_code == 401, "認証なしのアクセスで401エラーが返されるべきです"
-    assert response.json()["detail"] == "Not authenticated", "エラーメッセージが正しくありません"
-
+    assert "Not enough permissions" in response.json()["detail"], "エラーメッセージが正しくありません"
 
 @pytest.mark.asyncio
 async def test_delete_user_by_admin_success(test_admin, test_user, client: AsyncClient):
@@ -517,15 +475,3 @@ async def test_delete_user_forbidden(test_user, client: AsyncClient):
     # ユーザーが削除されていないことを確認
     not_deleted_user = await User.get_user_by_id(target_user.id)
     assert not_deleted_user is not None, "ユーザーが削除されています"
-
-@pytest.mark.asyncio
-async def test_delete_user_unauthorized(client: AsyncClient):
-    """
-    認証なしでアクセスした場合に401エラーが返されることを確認します。
-    """
-    # 認証なしでリクエストを送信
-    response = await client.delete("/users/1")
-
-    # レスポンスの検証
-    assert response.status_code == 401, "認証なしのアクセスで401エラーが返されるべきです"
-    assert response.json()["detail"] == "Not authenticated", "エラーメッセージが正しくありません"

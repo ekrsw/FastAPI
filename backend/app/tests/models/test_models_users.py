@@ -15,7 +15,7 @@ async def test_create_user(unique_username):
         "username": unique_username,
         "password": password,
         "is_admin": False
-        })
+    })
 
     assert new_user.id is not None, "ユーザーIDが設定されているか"
     assert new_user.username == unique_username, "ユーザー名が正しいか"
@@ -33,9 +33,8 @@ async def test_create_admin_user(unique_username):
         "username": unique_username,
         "password": password,
         "is_admin": True
-        })
+    })
     
-    exist_user = await User.get_user_by_username(unique_username)
     exist_user = await User.get_user_by_username(unique_username)
     assert admin_user.is_admin == True, "管理者権限が正しく設定されているか"
     assert exist_user is not None, "ユーザーがデータベースに保存されているか"
@@ -105,10 +104,13 @@ async def test_update_user(test_user):
     new_username = f"updated_{uuid.uuid4()}"
     
     # ユーザー情報を更新
-    await User.update_user(user.id, new_username, is_admin=True)
-    
-    # 更新されたユーザーを取得
-    updated_user = await User.get_user_by_id(user.id)
+    updated_user = await User.update_user(
+        db_obj=user,
+        obj_in={
+            "username": new_username,
+            "is_admin": True
+        }
+    )
     
     assert updated_user.username == new_username, "ユーザー名が更新されているか"
     assert updated_user.is_admin == True, "管理者権限が更新されているか"
@@ -120,10 +122,10 @@ async def test_update_password(test_user):
     new_password = "new_password456"
     
     # パスワードを更新
-    await User.update_password(user.id, new_password)
-    
-    # 更新されたユーザーを取得
-    updated_user = await User.get_user_by_id(user.id)
+    updated_user = await User.update_user(
+        db_obj=user,
+        obj_in={"password": new_password}
+    )
     
     # 古いパスワードが使えなくなっているか確認
     old_password_valid = await updated_user.verify_password(old_password)
