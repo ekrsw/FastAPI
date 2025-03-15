@@ -37,18 +37,17 @@ services:
       PGTZ: ${TIME_ZONE}
     # DB起動完了までappコンテナの起動を待つための設定
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready --username=${DATABASE_USER} --dbname=postgres"]
-      interval: 3s
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 5s
+      retries: 5
+      start_period: 10s
     # 既存プロジェクトとのポート競合を避けるためにポートフォワード
     ports:
       - "${DATABASE_PORT}:5432"
     # DBの削除を容易にするためにプロジェクト内のディレクトリにデータを保存
     volumes:
       - ./backend/docker/postgresql/data:/var/lib/postgresql/data
-      - ./backend/docker/postgresql/init:/docker-entrypoint-initdb.d
     networks:
       - fastapi_network
     # リソース制限を追加
@@ -89,7 +88,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 512G
+          memory: 512M
         reservations:
           cpus: '0.25'
           memory: 256M
@@ -122,7 +121,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 512G
+          memory: 512M
         reservations:
           cpus: '0.25'
           memory: 256M
