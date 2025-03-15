@@ -56,11 +56,11 @@ class UserCsvImportAdminView(BaseView):  # type: ignore
                 username = row['username']
                 logger.info(f"Creating user: {username}")
                 try:
-                    await User.create_user(
-                        username=username,
-                        plain_password=DEFAULT_PASSWORD,
-                        is_admin=is_admin
-                    )
+                    await User.create_user(obj_in={
+                        "username": username,
+                        "password": DEFAULT_PASSWORD,
+                        "is_admin": is_admin
+                    })
                     success_count += 1
                     logger.info(f"Successfully created user: {username}")
                 except Exception as e:
