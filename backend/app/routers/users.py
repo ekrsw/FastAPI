@@ -1,9 +1,9 @@
-from typing import List
+from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core import auth
 from app.models.user import User
-from app.schemas.user_schema import UserResponse
+from app.schemas.user_schema import UserCreate, UserResponse, UserUpdate
 
 
 router = APIRouter(
@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=UserResponse)
-async def create_user(username: str, password: str, is_admin: bool=False) -> UserResponse:
+async def create_user(user_in: UserCreate) -> UserResponse:
     """
     新しいユーザーを登録します。
 
@@ -40,15 +40,11 @@ async def create_user(username: str, password: str, is_admin: bool=False) -> Use
         ユーザーが存在しない場合に404 Not Foundエラーを返します。
     """
     # usernameで既存のユーザーを取得
-    exit_user = await User.get_user_by_username(username)
+    exit_user = await User.get_user_by_username(username=user_in.username)
     if exit_user:
         # 既存のユーザーが存在する場合はエラーを返す
         raise HTTPException(status_code=400, detail="Username already exists")
-    new_user = await User.create_user(obj_in={
-        "username": username,
-        "password": password,
-        "is_admin": is_admin
-        })
+    new_user = await User.from_schema(schema=user_in)
     return new_user
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -135,8 +131,7 @@ async def read_all_users(current_user: User=Depends(auth.get_current_user)) -> L
     return [UserResponse.model_validate(user) for user in users]  # SQLAlchemyモデルをPydanticモデルに変換
 
 from fastapi import Body
-
-@router.put("/{user_id}", response_model=UserResponse)
+'''@router.put("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: int,
     username: str = Body(...),
@@ -186,8 +181,51 @@ async def update_user(
             detail="Not enough permissions. Only admins can change admin privileges."
         )
     
-    await User.update_user(user_id, username, is_admin)
-    return await User.get_user_by_id(user_id)
+    await User.update_user(obj_in={
+        "id": user_id,
+        "username": username,
+        "is_admin": is_admin
+        })
+    return await User.get_user_by_id(user_id)'''
+
+# 仮
+@router.put("/me", response_model=UserResponse)
+async def update_user_me(
+    *,
+    user_in: UserUpdate,
+    current_user: User = Depends(auth.get_current_user)
+    ) -> Any:
+    """現在のユーザー情報更新"""
+    user = await User.update_from_schema(db_obj=current_user, schema=user_in)
+    return user
+
+@router.put("/{user_id}", response_model=UserResponse)
+def update_user(
+    *,
+    user_id: int,
+    user_in: UserUpdate,
+    current_user: User = Depends(auth.get_current_user)
+    ) -> Any:
+    """
+    指定IDのユーザー情報を更新（管理者のみ）
+    """
+    user = User.get_user_by_id(user_id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+    
+    # 管理者権限の変更は管理者のみが実行可能
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions. Only admins can change admin privileges."
+        )
+    
+    # PydanticスキーマでUserオブジェクトを更新
+    user = User.update_from_schema(db_obj=user, schema=user_in)
+    return user
 
 @router.delete("/{user_id}")
 async def delete_user(

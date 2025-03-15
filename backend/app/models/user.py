@@ -1,7 +1,9 @@
 from typing import List, Optional, Dict, Any, Type, TypeVar, Union
 from passlib.context import CryptContext
-from sqlalchemy import Boolean, Column, String, Select
+
+from pydantic import BaseModel
 from typing import Optional
+from sqlalchemy import Boolean, Column, String, Select
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from .base import BaseDatabase, T
@@ -85,7 +87,7 @@ class User(BaseDatabase):
             
             # パスワードを特別に処理
             if "password" in obj_in:
-                hashed_password = cls.set_password(obj_in["password"])
+                hashed_password = await cls.set_password(obj_in["password"])
                 del obj_in["password"]
                 update_data = {**obj_in, "hashed_password": hashed_password}
             else:
@@ -95,7 +97,6 @@ class User(BaseDatabase):
             for field, value in update_data.items():
                 if hasattr(db_obj, field):
                     setattr(db_obj, field, value)
-            
             session.add(db_obj)
         return db_obj
     
@@ -138,5 +139,18 @@ class User(BaseDatabase):
                 create_or_update = False
                 new_or_updated_user = new_user # 新規作成されたユーザー
         return new_or_updated_user, create_or_update
+    
+    # Pydanticモデルとの連携用メソッド
+    @classmethod
+    async def from_schema(cls: Type[T], *, schema: BaseModel) -> T:
+        """PydanticスキーマからUserオブジェクトを作成"""
+        schema_dict = schema.dict()
+        return cls.create_user(obj_in=schema_dict)
+    
+    @classmethod
+    async def update_from_schema(cls: Type[T], *, db_obj: T, schema: BaseModel) -> T:
+        """PydanticスキーマでUserオブジェクトを更新"""
+        schema_dict = schema.dict(exclude_unset=True)
+        return await cls.update_user(db_obj=db_obj, obj_in=schema_dict)
         
 
