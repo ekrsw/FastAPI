@@ -162,6 +162,135 @@ async def test_delete_user(test_user):
     assert deleted_user.deleted_at is not None, "deleted_atが設定されているか"
 
 @pytest.mark.asyncio
+async def test_get_user_by_username_with_deleted(test_user):
+    """ユーザー名による取得でinclude_deletedの動作を確認"""
+    user, _ = test_user
+    
+    # ユーザーを論理削除
+    await User.delete_user(user.id)
+    
+    # 論理削除後、include_deleted=Falseで取得を試みる
+    retrieved_user = await User.get_user_by_username(user.username, include_deleted=False)
+    assert retrieved_user is None, "論理削除されたユーザーが通常の取得で取得できないか"
+    
+    # 論理削除後、include_deleted=Trueで取得
+    retrieved_user = await User.get_user_by_username(user.username, include_deleted=True)
+    assert retrieved_user is not None, "論理削除されたユーザーが取得できているか"
+    assert retrieved_user.username == user.username, "ユーザー名が一致しているか"
+    assert retrieved_user.deleted_at is not None, "deleted_atが設定されているか"
+
+@pytest.mark.asyncio
+async def test_get_all_users_with_deleted(test_user):
+    """全ユーザー取得でinclude_deletedの動作を確認"""
+    user, _ = test_user
+    
+    # 追加のユーザーを作成
+    additional_user = await User.create_user(obj_in={
+        "username": f"additional_{uuid.uuid4()}",
+        "password": "password123",
+        "is_admin": False
+    })
+    
+    # 一人のユーザーを論理削除
+    await User.delete_user(user.id)
+    
+    # include_deleted=Falseで全ユーザー取得
+    active_users = await User.get_all_users(include_deleted=False)
+    assert len(active_users) == 1, "アクティブなユーザーのみが取得されているか"
+    assert all(u.deleted_at is None for u in active_users), "全てのユーザーが未削除か"
+    
+    # include_deleted=Trueで全ユーザー取得
+    all_users = await User.get_all_users(include_deleted=True)
+    assert len(all_users) == 2, "削除済みユーザーを含めて全て取得されているか"
+    assert any(u.deleted_at is not None for u in all_users), "削除済みユーザーが含まれているか"
+
+@pytest.mark.asyncio
+async def test_update_user_edge_cases(test_user):
+    """ユーザー更新の特殊ケースを確認"""
+    user, _ = test_user
+    
+    # ユーザーを論理削除
+    await User.delete_user(user.id)
+    
+    # 論理削除されたユーザーの更新を試みる
+    with pytest.raises(Exception):
+        await User.update_user(
+            db_obj=user,
+            obj_in={"username": "new_name"}
+        )
+    
+    # 存在しないユーザーの更新を試みる
+    non_existent_user = User(id=uuid.uuid4(), username="non_existent")
+    with pytest.raises(Exception):
+        await User.update_user(
+            db_obj=non_existent_user,
+            obj_in={"username": "new_name"}
+        )
+    
+    # 一部のフィールドのみを更新
+    active_user = await User.create_user(obj_in={
+        "username": f"partial_{uuid.uuid4()}",
+        "password": "password123",
+        "is_admin": False
+    })
+    updated_user = await User.update_user(
+        db_obj=active_user,
+        obj_in={"is_admin": True}
+    )
+    assert updated_user.is_admin == True, "is_adminが更新されているか"
+    assert updated_user.username == active_user.username, "更新していないフィールドが保持されているか"
+
+@pytest.mark.asyncio
+async def test_delete_user_edge_cases(test_user):
+    """ユーザー削除の特殊ケースを確認"""
+    user, _ = test_user
+    
+    # ユーザーを論理削除
+    await User.delete_user(user.id)
+    
+    # 既に論理削除されているユーザーを再度論理削除
+    await User.delete_user(user.id)
+    deleted_user = await User.get_user_by_id(user.id, include_deleted=True)
+    assert deleted_user is not None, "ユーザーが存在しているか"
+    
+    # 存在しないユーザーIDで論理削除を試みる
+    non_existent_id = uuid.uuid4()
+    with pytest.raises(Exception):
+        await User.delete_user(non_existent_id)
+
+@pytest.mark.asyncio
+async def test_delete_user_permanently_edge_cases(test_user):
+    """物理削除の特殊ケースを確認"""
+    user, _ = test_user
+    
+    # 論理削除せずに直接物理削除
+    await User.delete_user_permanently(user.id)
+    deleted_user = await User.get_user_by_id(user.id, include_deleted=True)
+    assert deleted_user is None, "ユーザーが完全に削除されているか"
+    
+    # 存在しないユーザーIDで物理削除を試みる
+    non_existent_id = uuid.uuid4()
+    with pytest.raises(Exception):
+        await User.delete_user_permanently(non_existent_id)
+
+@pytest.mark.asyncio
+async def test_invalid_uuid_operations():
+    """無効なUUIDでの操作を確認"""
+    invalid_id = "invalid-uuid"
+    
+    # 無効なUUIDでのユーザー取得
+    with pytest.raises(Exception):
+        await User.get_user_by_id(invalid_id)
+    
+    # 無効なUUIDでの論理削除
+    with pytest.raises(Exception):
+        await User.delete_user(invalid_id)
+    
+    # 無効なUUIDでの物理削除
+    with pytest.raises(Exception):
+        await User.delete_user_permanently(invalid_id)
+
+@pytest.mark.asyncio
 async def test_delete_user_permanently(test_user):
     """物理削除が正しく動作するかを確認"""
     user, _ = test_user

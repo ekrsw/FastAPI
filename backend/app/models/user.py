@@ -56,10 +56,13 @@ class User(ModelBaseMixin):
 
 
     @classmethod
-    async def get_all_users(cls: Type[T]):
+    async def get_all_users(cls: Type[T], include_deleted: bool = False) -> List[T]:
         """全てのユーザーを取得する"""
         async with AsyncContextManager() as session:
-            result = await session.execute(Select(cls))
+            stmt = Select(cls)
+            if include_deleted:
+                stmt = stmt.execution_options(include_deleted=True)
+            result = await session.execute(stmt)
             users = result.scalars().all()
         return users
 
@@ -119,7 +122,12 @@ class User(ModelBaseMixin):
         ------
         ValueError
             更新対象のユーザーオブジェクトが存在しない場合
+        Exception
+            論理削除済みのユーザーを更新しようとした場合
         """
+        if db_obj.deleted_at is not None:
+            raise Exception("Cannot update deleted user")
+
         async with AsyncContextManager() as session:
             # パスワードを特別に処理
             update_data = obj_in.copy()
