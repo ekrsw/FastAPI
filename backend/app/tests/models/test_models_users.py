@@ -64,15 +64,27 @@ async def test_set_password():
 
 @pytest.mark.asyncio
 async def test_get_user_by_id(test_user):
-    """IDによるユーザー取得が正しく動作するかを確認"""
+    """IDによるユーザー取得が正しく動作するかを確認（include_deleteの動作確認を含む）"""
     user, _ = test_user
     
-    # ユーザーをIDで取得
+    # 通常のユーザー取得（デフォルト: include_delete=False）
     retrieved_user = await User.get_user_by_id(user.id)
-    
     assert retrieved_user is not None, "ユーザーが取得できているか"
     assert retrieved_user.id == user.id, "正しいユーザーが取得できているか"
     assert retrieved_user.username == user.username, "ユーザー名が一致しているか"
+
+    # ユーザーを論理削除
+    await User.delete_user(user.id)
+
+    # 論理削除後、include_delete=Falseで取得を試みる
+    retrieved_user = await User.get_user_by_id(user.id, include_deleted=False)
+    assert retrieved_user is None, "論理削除されたユーザーが通常の取得で取得できないか"
+
+    # 論理削除後、include_delete=Trueで取得
+    retrieved_user = await User.get_user_by_id(user.id, include_deleted=True)
+    assert retrieved_user is not None, "論理削除されたユーザーが取得できているか"
+    assert retrieved_user.id == user.id, "正しいユーザーが取得できているか"
+    assert retrieved_user.deleted_at is not None, "deleted_atが設定されているか"
 
 @pytest.mark.asyncio
 async def test_get_user_by_username(test_user):
