@@ -18,6 +18,7 @@ class User(BaseDatabase):
     username = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
+    test = Column(String, nullable=True)
     # ここにフィールドを追加
 
     def __repr__(self):
