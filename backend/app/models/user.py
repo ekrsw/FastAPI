@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy import Boolean, Column, String, Select
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.sql import func
 
 from .base import ModelBaseMixin, T
 from app.db.session import AsyncContextManager
@@ -104,7 +105,8 @@ class User(ModelBaseMixin):
         """ユーザーを削除する"""
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id)
-            await session.delete(user)
+            user.deleted_at = func.now()
+            session.add(user)
             await session.commit()
     
     @classmethod
