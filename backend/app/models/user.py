@@ -125,10 +125,14 @@ class User(ModelBaseMixin):
         Exception
             論理削除済みのユーザーを更新しようとした場合
         """
-        if db_obj.deleted_at is not None:
-            raise Exception("Cannot update deleted user")
-
         async with AsyncContextManager() as session:
+            # 最新のユーザー情報を取得して削除状態を確認
+            current_user = await cls.get_user_by_id(db_obj.id, include_deleted=True)
+            if current_user is None:
+                raise ValueError("User not found")
+            if current_user.deleted_at is not None:
+                raise Exception("Cannot update deleted user")
+
             # パスワードを特別に処理
             update_data = obj_in.copy()
             if "password" in update_data:
