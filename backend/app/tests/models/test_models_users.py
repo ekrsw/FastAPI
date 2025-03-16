@@ -143,10 +143,10 @@ async def test_delete_user(test_user):
     # ユーザーを論理削除
     await User.delete_user(user.id)
     
-    # 削除されたユーザーを取得
-    deleted_user = await User.get_user_by_id(user.id)
+    # 削除されたユーザーを取得（論理削除されたレコードも含める）
+    deleted_user = await User.get_user_by_id(user.id, include_deleted=True)
     
-    assert deleted_user is not None, "ユーザーが存在しているか"
+    assert deleted_user is not None, "ユーザーが存在しているか（論理削除を含む）"
     assert deleted_user.deleted_at is not None, "deleted_atが設定されているか"
 
 @pytest.mark.asyncio

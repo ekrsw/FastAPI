@@ -64,10 +64,13 @@ class User(ModelBaseMixin):
         return users
 
     @classmethod
-    async def get_user_by_id(cls: Type[T], user_id: int):
+    async def get_user_by_id(cls: Type[T], user_id: int, include_deleted: bool = False):
         """ユーザーIDからユーザーを取得する"""
         async with AsyncContextManager() as session:
-            result = await session.execute(Select(cls).where(cls.id == user_id))
+            stmt = Select(cls).where(cls.id == user_id)
+            if include_deleted:
+                stmt = stmt.execution_options(include_deleted=True)
+            result = await session.execute(stmt)
             user = result.scalar_one_or_none()
         return user
     
@@ -104,7 +107,7 @@ class User(ModelBaseMixin):
     async def delete_user(cls: Type[T], user_id: int):
         """ユーザーを削除する"""
         async with AsyncContextManager() as session:
-            user = await cls.get_user_by_id(user_id)
+            user = await cls.get_user_by_id(user_id, include_deleted=True)
             user.deleted_at = func.now()
             session.add(user)
             await session.commit()
@@ -112,7 +115,7 @@ class User(ModelBaseMixin):
     @classmethod
     async def delete_user_permanently(cls: Type[T], user_id: int):
         async with AsyncContextManager() as session:
-            user = await cls.get_user_by_id(user_id)
+            user = await cls.get_user_by_id(user_id, include_deleted=True)
             await session.delete(user)
             await session.commit()
     
