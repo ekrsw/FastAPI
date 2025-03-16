@@ -1,9 +1,0 @@
-#!/bin/sh
-set -e
-
-psql -v ON_ERROR_STOP=1 --username "$DATABASE_USER" --dbname "postgres" <<-EOSQL
-    SELECT 'CREATE DATABASE ${DATABASE_NAME}' 
-    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '${DATABASE_NAME}')\gexec
-    
-    GRANT ALL PRIVILEGES ON DATABASE "${DATABASE_NAME}" TO ${DATABASE_USER};
-EOSQL
