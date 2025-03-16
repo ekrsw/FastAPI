@@ -65,7 +65,20 @@ class User(ModelBaseMixin):
 
     @classmethod
     async def get_user_by_id(cls: Type[T], user_id: int, include_deleted: bool = False):
-        """ユーザーIDからユーザーを取得する"""
+        """ユーザーIDからユーザーを取得する
+        
+        Parameters
+        ----------
+        user_id : int
+        ユーザーID
+        include_deleted : bool, default False
+        論理削除済みのユーザーも含めて取得するかどうか
+        
+        Returns
+        -------
+        User
+        取得したユーザー
+        """
         async with AsyncContextManager() as session:
             stmt = Select(cls).where(cls.id == user_id)
             if include_deleted:
@@ -75,16 +88,38 @@ class User(ModelBaseMixin):
         return user
     
     @classmethod
-    async def get_user_by_username(cls: Type[T], username: str):
+    async def get_user_by_username(cls: Type[T], username: str, include_deleted: bool = False):
         """ユーザー名からユーザーを取得する"""
         async with AsyncContextManager() as session:
-            result = await session.execute(Select(cls).where(cls.username == username))
+            stmt = Select(cls).where(cls.username == username)
+            if include_deleted:
+                stmt = stmt.execution_options(include_deleted=True)
+            result = await session.execute(stmt)
             user = result.scalar_one_or_none()
         return user
     
     @classmethod
     async def update_user(cls: Type[T], *, db_obj: T, obj_in: Dict[str, Any]) -> T:
-        """汎用ユーザー情報を更新する"""
+        """
+        汎用ユーザー情報を更新する
+        
+        Parameters
+        ----------
+        db_obj : User
+            更新対象のユーザーオブジェクト
+        obj_in : Dict[str, Any]
+            更新情報
+        
+        Returns
+        -------
+        User
+            更新後のユーザーオブジェクト
+        
+        Raises
+        ------
+        ValueError
+            更新対象のユーザーオブジェクトが存在しない場合
+        """
         async with AsyncContextManager() as session:
             # パスワードを特別に処理
             update_data = obj_in.copy()
