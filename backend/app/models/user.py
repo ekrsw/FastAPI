@@ -3,8 +3,8 @@ from passlib.context import CryptContext
 
 from pydantic import BaseModel
 from typing import Optional
-from sqlalchemy import Boolean, Column, String, Select
-from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import Boolean, String, Select
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from .base import ModelBaseMixin, T
@@ -16,9 +16,9 @@ pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 class User(ModelBaseMixin):
     __tablename__ = "users"
-    username = Column(String, unique=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    is_admin = Column(Boolean, default=False, nullable=False)
+    username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # ここにフィールドを追加
 
     def __repr__(self):

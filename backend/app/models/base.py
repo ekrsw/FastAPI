@@ -1,6 +1,7 @@
 import datetime
 
-from sqlalchemy import Column, Integer, DateTime
+from sqlalchemy import Integer, DateTime
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 from typing import TypeVar
 
@@ -11,13 +12,13 @@ T = TypeVar('T', bound='BaseDatabase')
 
 class ModelBaseMixin(Base):
     __abstract__ = True
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-    deleted_at = Column(DateTime, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+    deleted_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
 class ModelBaseMixinWithoutDeletedAt(Base):
     __abstract__ = True
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
