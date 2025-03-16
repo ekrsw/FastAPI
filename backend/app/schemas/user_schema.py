@@ -5,7 +5,6 @@ from typing import List, Optional
 class UserBase(BaseModel):
     username: Optional[str] = None
     is_admin: Optional[bool] = False
-    test: Optional[str] = None
     # ここにフィールドを追加
 
     @field_validator("username")

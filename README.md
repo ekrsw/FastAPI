@@ -81,8 +81,8 @@ http://localhost:8001/admin/login
 
 ## モデルフィールドの追加方法
 
+以下のファイルの`# ここにフィールドを追加`と記載されている箇所に追加する。
+
 1. app/models/user.py
-
-```
-
-```
+2. app/schemas/user_schema.py
+3. app/admin/views/users.py
