@@ -476,3 +476,96 @@ async def test_delete_user_forbidden(test_user, client: AsyncClient):
     # ユーザーが削除されていないことを確認
     not_deleted_user = await User.get_user_by_id(target_user.id)
     assert not_deleted_user is not None, "ユーザーが削除されています"
+
+@pytest.mark.asyncio
+async def test_delete_user_permanently_by_admin_success(test_admin, test_user, client: AsyncClient):
+    """
+    管理者が他のユーザーを物理削除できることを確認します。
+    """
+    # 管理者ユーザーとテストユーザーの作成
+    admin, admin_password = test_admin
+    user, _ = test_user
+    
+    # 管理者のアクセストークンを取得
+    token_response = await client.post(
+        "/auth/token",
+        data={"username": admin.username, "password": admin_password}
+    )
+    access_token = token_response.json()["access_token"]
+
+    # 管理者が一般ユーザーを物理削除
+    response = await client.delete(
+        f"/users/{user.id}/permanent",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    # レスポンスの検証
+    assert response.status_code == 200, f"ユーザーの物理削除に失敗しました: {response.text}"
+    data = response.json()
+    assert data["message"] == "User deleted successfully", "削除成功メッセージが正しくありません"
+    
+    # 削除されたユーザーが物理削除されていることを確認
+    deleted_user = await User.get_user_by_id(user.id)
+    assert deleted_user is None, "ユーザーが物理削除されていません"
+
+@pytest.mark.asyncio
+async def test_delete_user_permanently_not_found(test_admin, client: AsyncClient):
+    """
+    存在しないユーザーIDを指定した場合に404エラーが返されることを確認します。
+    """
+    # 管理者ユーザーの作成とアクセストークンの取得
+    admin, admin_password = test_admin
+    
+    # 管理者のアクセストークンを取得
+    token_response = await client.post(
+        "/auth/token",
+        data={"username": admin.username, "password": admin_password}
+    )
+    access_token = token_response.json()["access_token"]
+
+    # 存在しないユーザーIDでリクエストを送信
+    non_existent_id = 99999
+    response = await client.delete(
+        f"/users/{non_existent_id}/permanent",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    # レスポンスの検証
+    assert response.status_code == 404, "存在しないユーザーIDで404エラーが返されるべきです"
+    assert response.json()["detail"] == "User not found", "エラーメッセージが正しくありません"
+
+@pytest.mark.asyncio
+async def test_delete_user_permanently_forbidden(test_user, client: AsyncClient):
+    """
+    一般ユーザーがユーザーを物理削除しようとした場合に403エラーが返されることを確認します。
+    """
+    # テストユーザーの作成
+    user, password = test_user
+    
+    # 削除対象のユーザーを作成
+    target_user = await User.create_user(obj_in={
+        "username": "user_to_delete_permanently",
+        "password": "test_password123",
+        "is_admin": False
+    })
+    
+    # 一般ユーザーのアクセストークンを取得
+    token_response = await client.post(
+        "/auth/token",
+        data={"username": user.username, "password": password}
+    )
+    access_token = token_response.json()["access_token"]
+
+    # 一般ユーザーが他のユーザーを物理削除しようとする
+    response = await client.delete(
+        f"/users/{target_user.id}/permanent",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    # レスポンスの検証
+    assert response.status_code == 403, "一般ユーザーによるユーザー物理削除で403エラーが返されるべきです"
+    assert "Not enough permissions" in response.json()["detail"], "エラーメッセージが正しくありません"
+    
+    # ユーザーが削除されていないことを確認
+    not_deleted_user = await User.get_user_by_id(target_user.id)
+    assert not_deleted_user is not None, "ユーザーが削除されています"

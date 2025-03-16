@@ -265,7 +265,7 @@ async def delete_user(
     await User.delete_user(user_id)
     return {"message": "User deleted successfully"}
 
-@router.delete("/{user_id}")
+@router.delete("/{user_id}/permanent")
 async def delete_user_permanently(
     user_id: int,
     current_user: User=Depends(auth.get_current_user)
