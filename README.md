@@ -78,3 +78,11 @@ psql -h [host名] -p [ポート番号] -U [ユーザー名] -d [データベー�
 ### 管理画面
 
 http://localhost:8001/admin/login
+
+## モデルフィールドの追加方法
+
+1. app/models/user.py
+
+```
+
+```

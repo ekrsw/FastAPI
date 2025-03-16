@@ -18,6 +18,7 @@ class User(BaseDatabase):
     username = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
+    # ここにフィールドを追加
 
     def __repr__(self):
         return f"<User {self.username}>"
@@ -33,7 +34,7 @@ class User(BaseDatabase):
         return pwd_context.hash(cleaned_password)
     
     @classmethod
-    async def create_user(cls: Type[T], *, obj_in: Dict[str, Any]) -> T:
+    async def _create_user(cls: Type[T], *, obj_in: Dict[str, Any]) -> T:
         """ユーザーを作成する"""
         async with AsyncContextManager() as session:
             user_schema = UserCreate(**obj_in)
@@ -48,6 +49,28 @@ class User(BaseDatabase):
             await session.refresh(new_user)
         return new_user
     
+    # 仮
+    @classmethod
+    async def create_user(cls: Type[T], *, obj_in: Dict[str, Any]) -> T:
+        """ユーザー作成メソッド"""
+        async with AsyncContextManager() as session:
+            if "password" in obj_in:
+                hashed_password = await cls.set_password(obj_in["password"])
+                del obj_in["password"]
+                obj_data = {**obj_in, "hashed_password": hashed_password}
+            else:
+                obj_data = obj_in.copy()
+            
+            new_user = cls()
+            for field, value in obj_data.items():
+                if hasattr(new_user, field):
+                    setattr(new_user, field, value)
+            
+            session.add(new_user)
+        
+        return new_user
+
+
     @classmethod
     async def get_all_users(cls: Type[T]):
         """全てのユーザーを取得する"""
