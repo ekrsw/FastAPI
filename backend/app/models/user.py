@@ -6,14 +6,14 @@ from typing import Optional
 from sqlalchemy import Boolean, Column, String, Select
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from .base import BaseDatabase, T
+from .base import ModelBaseMixin, T
 from app.db.session import AsyncContextManager
 from app.schemas.user_schema import UserCreate, UserUpdate, UserPasswordSchema
 
 
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
-class User(BaseDatabase):
+class User(ModelBaseMixin):
     __tablename__ = "users"
     username = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
@@ -33,23 +33,6 @@ class User(BaseDatabase):
         cleaned_password = UserPasswordSchema(password=plain_password).password
         return pwd_context.hash(cleaned_password)
     
-    @classmethod
-    async def _create_user(cls: Type[T], *, obj_in: Dict[str, Any]) -> T:
-        """ユーザーを作成する"""
-        async with AsyncContextManager() as session:
-            user_schema = UserCreate(**obj_in)
-            hashed_password = await cls.set_password(user_schema.password)
-            new_user = cls(
-                username=user_schema.username,
-                hashed_password=hashed_password,
-                is_admin=user_schema.is_admin
-            )
-            session.add(new_user)
-            await session.commit()
-            await session.refresh(new_user)
-        return new_user
-    
-    # 仮
     @classmethod
     async def create_user(cls: Type[T], *, obj_in: Dict[str, Any]) -> T:
         """ユーザー作成メソッド"""
