@@ -410,9 +410,10 @@ async def test_delete_user_by_admin_success(test_admin, test_user, client: Async
     data = response.json()
     assert data["message"] == "User deleted successfully", "削除成功メッセージが正しくありません"
     
-    # 削除されたユーザーが存在しないことを確認
+    # 削除されたユーザーが論理削除されていることを確認
     deleted_user = await User.get_user_by_id(user.id)
-    assert deleted_user is None, "ユーザーが削除されていません"
+    assert deleted_user is not None, "ユーザーが存在していません"
+    assert deleted_user.deleted_at is not None, "ユーザーが論理削除されていません"
 
 @pytest.mark.asyncio
 async def test_delete_user_not_found(test_admin, client: AsyncClient):

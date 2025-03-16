@@ -227,9 +227,10 @@ async def delete_user(
     current_user: User=Depends(auth.get_current_user)
     ) -> dict:
     """
-    指定されたユーザーを削除します。
+    指定されたユーザーを論理削除します。
 
     このエンドポイントは、指定されたユーザーを削除します。
+    削除されたユーザーはデータベースから削除されず、deleted_atフィールドが更新されます。
     認証されたユーザーかつ管理者のみがアクセスできます。
 
     Parameters
@@ -262,4 +263,48 @@ async def delete_user(
     
     # 削除実行
     await User.delete_user(user_id)
+    return {"message": "User deleted successfully"}
+
+@router.delete("/{user_id}")
+async def delete_user_permanently(
+    user_id: int,
+    current_user: User=Depends(auth.get_current_user)
+    ) -> dict:
+    """
+    指定されたユーザーを物理削除します。
+
+    このエンドポイントは、指定されたユーザーを物理削除します。
+    削除されたユーザーは復元できません。
+    認証されたユーザーかつ管理者のみがアクセスできます。
+
+    Parameters
+    ----------
+    user_id : int
+        削除するユーザーのID。
+
+    Returns
+    -------
+    dict
+        削除成功メッセージを含む辞書。
+
+    Raises
+    ------
+    HTTPException
+        - ユーザーが存在しない場合に404 Not Foundエラーを返します。
+        - 管理者でない場合に403 Forbiddenエラーを返します。
+    """
+    # ユーザー存在チェック
+    user = await User.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # 管理者権限チェック
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions. Only admins can delete users."
+        )
+    
+    # 削除実行
+    await User.delete_user_permanently(user_id)
     return {"message": "User deleted successfully"}

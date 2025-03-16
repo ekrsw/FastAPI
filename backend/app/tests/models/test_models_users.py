@@ -137,13 +137,27 @@ async def test_update_password(test_user):
 
 @pytest.mark.asyncio
 async def test_delete_user(test_user):
-    """ユーザー削除が正しく動作するかを確認"""
+    """論理削除が正しく動作するかを確認"""
     user, _ = test_user
     
-    # ユーザーを削除
+    # ユーザーを論理削除
     await User.delete_user(user.id)
+    
+    # 削除されたユーザーを取得
+    deleted_user = await User.get_user_by_id(user.id)
+    
+    assert deleted_user is not None, "ユーザーが存在しているか"
+    assert deleted_user.deleted_at is not None, "deleted_atが設定されているか"
+
+@pytest.mark.asyncio
+async def test_delete_user_permanently(test_user):
+    """物理削除が正しく動作するかを確認"""
+    user, _ = test_user
+    
+    # ユーザーを物理削除
+    await User.delete_user_permanently(user.id)
     
     # 削除されたユーザーを取得しようとする
     deleted_user = await User.get_user_by_id(user.id)
     
-    assert deleted_user is None, "ユーザーが削除されているか"
+    assert deleted_user is None, "ユーザーが完全に削除されているか"

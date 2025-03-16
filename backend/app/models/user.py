@@ -110,6 +110,13 @@ class User(ModelBaseMixin):
             await session.commit()
     
     @classmethod
+    async def delete_user_permanently(cls: Type[T], user_id: int):
+        async with AsyncContextManager() as session:
+            user = await cls.get_user_by_id(user_id)
+            await session.delete(user)
+            await session.commit()
+    
+    @classmethod
     async def update_password(cls: Type[T], user_id: int, plain_password: Optional[str]):
         """パスワードを更新する"""
         async with AsyncContextManager() as session:
