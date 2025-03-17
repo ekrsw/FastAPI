@@ -45,7 +45,7 @@ async def create_user(user_in: UserCreate) -> UserResponse:
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def read_user_by_id(
-    user_id: int,
+    user_id: str,
     current_user: User=Depends(auth.get_current_user)
     ) -> UserResponse:
     """
@@ -56,7 +56,7 @@ async def read_user_by_id(
 
     Parameters
     ----------
-    user_id : int
+    user_id : str
         取得するユーザーのID。
     current_user : User
         現在認証されているユーザー。
@@ -169,7 +169,7 @@ async def update_user_me(
 @router.put("/{user_id}", response_model=UserResponse)
 async def update_user(
     *,
-    user_id: int,
+    user_id: str,
     user_in: UserUpdate,
     current_user: User = Depends(auth.get_current_user)
     ) -> UserResponse:
@@ -181,7 +181,7 @@ async def update_user(
 
     Parameters
     ----------
-    user_id : int
+    user_id : str
         更新するユーザーのID。
     user_in : UserUpdate
         更新するユーザー情報。
@@ -223,7 +223,7 @@ async def update_user(
 
 @router.delete("/{user_id}")
 async def delete_user(
-    user_id: int,
+    user_id: str,
     current_user: User=Depends(auth.get_current_user)
     ) -> dict:
     """
@@ -235,7 +235,7 @@ async def delete_user(
 
     Parameters
     ----------
-    user_id : int
+    user_id : str
         削除するユーザーのID。
 
     Returns
@@ -267,7 +267,7 @@ async def delete_user(
 
 @router.delete("/{user_id}/permanent")
 async def delete_user_permanently(
-    user_id: int,
+    user_id: str,
     current_user: User=Depends(auth.get_current_user)
     ) -> dict:
     """
@@ -279,7 +279,7 @@ async def delete_user_permanently(
 
     Parameters
     ----------
-    user_id : int
+    user_id : str
         削除するユーザーのID。
 
     Returns

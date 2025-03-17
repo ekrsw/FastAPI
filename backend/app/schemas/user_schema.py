@@ -21,7 +21,7 @@ class UserBase(BaseModel):
         return username
 
 class UserResponseBase(BaseModel):
-    id: int
+    id: str
     username: str
     is_admin: bool
     # ここにフィールドを追加

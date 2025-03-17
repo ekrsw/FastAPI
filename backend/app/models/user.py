@@ -67,12 +67,12 @@ class User(ModelBaseMixin):
         return users
 
     @classmethod
-    async def get_user_by_id(cls: Type[T], user_id: int, include_deleted: bool = False):
+    async def get_user_by_id(cls: Type[T], user_id: str, include_deleted: bool = False):
         """ユーザーIDからユーザーを取得する
         
         Parameters
         ----------
-        user_id : int
+        user_id : str
         ユーザーID
         include_deleted : bool, default False
         論理削除済みのユーザーも含めて取得するかどうか
@@ -151,7 +151,7 @@ class User(ModelBaseMixin):
         return db_obj
     
     @classmethod
-    async def delete_user(cls: Type[T], user_id: int):
+    async def delete_user(cls: Type[T], user_id: str):
         """ユーザーを削除する"""
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id, include_deleted=True)
@@ -160,14 +160,14 @@ class User(ModelBaseMixin):
             await session.commit()
     
     @classmethod
-    async def delete_user_permanently(cls: Type[T], user_id: int):
+    async def delete_user_permanently(cls: Type[T], user_id: str):
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id, include_deleted=True)
             await session.delete(user)
             await session.commit()
     
     @classmethod
-    async def update_password(cls: Type[T], user_id: int, plain_password: Optional[str]):
+    async def update_password(cls: Type[T], user_id: str, plain_password: Optional[str]):
         """パスワードを更新する"""
         async with AsyncContextManager() as session:
             user = await cls.get_user_by_id(user_id)
