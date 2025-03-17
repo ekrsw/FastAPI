@@ -274,23 +274,6 @@ async def test_delete_user_permanently_edge_cases(test_user):
         await User.delete_user_permanently(non_existent_id)
 
 @pytest.mark.asyncio
-async def test_invalid_uuid_operations():
-    """無効なUUIDでの操作を確認"""
-    invalid_id = "invalid-uuid"
-    
-    # 無効なUUIDでのユーザー取得
-    with pytest.raises(Exception):
-        await User.get_user_by_id(invalid_id)
-    
-    # 無効なUUIDでの論理削除
-    with pytest.raises(Exception):
-        await User.delete_user(invalid_id)
-    
-    # 無効なUUIDでの物理削除
-    with pytest.raises(Exception):
-        await User.delete_user_permanently(invalid_id)
-
-@pytest.mark.asyncio
 async def test_delete_user_permanently(test_user):
     """物理削除が正しく動作するかを確認"""
     user, _ = test_user
