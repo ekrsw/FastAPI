@@ -20,6 +20,13 @@ class UserBase(BaseModel):
             raise ValueError("username must be between 3 and 100 characters")
         return username
 
+class UserResponseBase(BaseModel):
+    id: int
+    username: str
+    is_admin: bool
+    
+    model_config = ConfigDict(from_attributes=True)
+
 
 class PasswordMixin(BaseModel):
     password: str
@@ -32,6 +39,9 @@ class PasswordMixin(BaseModel):
             if len(password) < 8 or len(password) > 30:
                 raise ValueError("password must be between 8 and 30 characters")
         return password
+
+class UserResponse(UserResponseBase):
+    pass
 
 
 class UserCreate(UserBase, PasswordMixin):
@@ -54,11 +64,3 @@ class UserUpdate(UserBase):
 class UserPasswordSchema(PasswordMixin):
     """パスワードのバリデーション用スキーマ"""
     pass
-
-
-class UserResponse(BaseModel):
-    id: int
-    username: str
-    is_admin: bool
-    
-    model_config = ConfigDict(from_attributes=True)
