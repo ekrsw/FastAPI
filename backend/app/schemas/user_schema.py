@@ -24,6 +24,7 @@ class UserResponseBase(BaseModel):
     id: int
     username: str
     is_admin: bool
+    # ここにフィールドを追加
     
     model_config = ConfigDict(from_attributes=True)
 
