@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from sqladmin import Admin
 
 from app.admin.core.auth import AdminAuth
+from app.admin.views.groups import GroupAdminView
 from app.admin.views.users import UserAdminView
 from app.admin.views.user_csv_import import UserCsvImportAdminView
 from app.core.config import settings
@@ -36,5 +37,6 @@ admin_manager = Admin(
 )
 
 # viewを追加する
+admin_manager.add_view(GroupAdminView)
 admin_manager.add_view(UserAdminView)
 admin_manager.add_view(UserCsvImportAdminView)

@@ -4,14 +4,12 @@ from pydantic import BaseModel
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import T
-from app.db.database import Base
+from .base import ModelBaseMixinWithoutDeletedAt, T
 from app.db.session import AsyncContextManager
 
 
-class Group(Base):
+class Group(ModelBaseMixinWithoutDeletedAt):
     __tablename__ = "groups"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     groupname: Mapped[str] = mapped_column(String, nullable=False)
 
     def __repr__(self):

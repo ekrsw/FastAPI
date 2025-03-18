@@ -6,7 +6,7 @@ import logging
 import os
 
 from app.models.user import User
-from app.routers import auth, users
+from app.routers import auth, groups, users
 from app.core.config import settings
 from app.db.database import Database
 
@@ -69,6 +69,7 @@ app.add_middleware(
 
 # ルーターの登録
 app.include_router(users.router)
+app.include_router(groups.router)
 app.include_router(auth.router)
 
 # ルートパスのエンドポイント

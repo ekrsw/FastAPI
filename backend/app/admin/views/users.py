@@ -10,7 +10,7 @@ from app.models.user import User
 
 
 class UserAdminView(ModelView, model=User):  # type: ignore
-    name_plural = "Users"
+    name_plural = "ユーザー"
     # ここにフィールドを追加
     column_list = [
         User.id,
