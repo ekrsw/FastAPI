@@ -14,26 +14,20 @@ router = APIRouter(
 
 @router.post("/", response_model=UserResponse)
 async def create_user(user_in: UserCreate) -> UserResponse:
-    """
-    新しいユーザーを登録します。
+    """新しいユーザーを登録します。
 
     このエンドポイントは、提供されたユーザー情報を基に新しいユーザーをデータベースに作成します。
     ユーザー名が既に登録されている場合はエラーを返します。
     認証不要でアクセスできます。
 
-    Parameters
-    ----------
-    user_in : UserCreate
-        作成するユーザーの情報。
-    Returns
-    -------
-    UserResponse
-        作成したユーザーの詳細を含むレスポンスモデル。
+    Args:
+        user_in (UserCreate): 作成するユーザーの情報（パスワードは自動的にハッシュ化されます）
 
-    Raises
-    ------
-    HTTPException
-        ユーザー名が既に存在する場合に400 Bad Requestエラーを返します。
+    Returns:
+        UserResponse: 作成したユーザーの詳細を含むレスポンスモデル（パスワードは含まれません）
+
+    Raises:
+        HTTPException: ユーザー名が既に存在する場合に400 Bad Requestエラーを返します
     """
     # usernameで既存のユーザーを取得
     exist_user = await User.get_user_by_username(username=user_in.username)
@@ -48,29 +42,22 @@ async def read_user_by_id(
     user_id: str,
     current_user: User=Depends(auth.get_current_user)
     ) -> UserResponse:
-    """
-    指定されたユーザーの情報を取得します。
+    """指定されたユーザーの情報を取得します。
 
     このエンドポイントは、指定されたユーザーの情報を取得します。
     認証されたユーザーのみがアクセスできます。
 
-    Parameters
-    ----------
-    user_id : str
-        取得するユーザーのID。
-    current_user : User
-        現在認証されているユーザー。
+    Args:
+        user_id (str): 取得するユーザーのID
+        current_user (User): 現在認証されているユーザー
 
-    Returns
-    -------
-    UserResponse
-        取得したユーザーの詳細を含むレスポンスモデル。
+    Returns:
+        UserResponse: 取得したユーザーの詳細を含むレスポンスモデル
 
-    Raises
-    ------
-    HTTPException
-        - ユーザーが存在しない場合に404 Not Foundエラーを返します。
-        - 認証されていない場合に401 Unauthorizedエラーを返します。
+    Raises:
+        HTTPException: 
+            - ユーザーが存在しない場合に404 Not Foundエラーを返します
+            - 認証されていない場合に401 Unauthorizedエラーを返します
     """
     user = await User.get_user_by_id(user_id)
     if not user:
@@ -82,26 +69,22 @@ async def read_user_by_username(
     username: str,
     current_user: User=Depends(auth.get_current_user)
     ) -> UserResponse:
-    """
-    指定されたユーザーの情報を取得します。
+    """指定されたユーザーの情報を取得します。
 
     このエンドポイントは、指定されたユーザーの情報を取得します。
     認証されたユーザーのみがアクセスできます。
 
-    Parameters
-    ----------
-    username : str
-        取得するユーザーの名前。
-    Returns
-    -------
-    UserResponse
-        取得したユーザーの詳細を含むレスポンスモデル。
+    Args:
+        username (str): 取得するユーザーの名前
+        current_user (User): 現在認証されているユーザー
 
-    Raises
-    ------
-    HTTPException
-        - ユーザーが存在しない場合に404 Not Foundエラーを返します。
-        - 認証されていない場合に401 Unauthorizedエラーを返します。
+    Returns:
+        UserResponse: 取得したユーザーの詳細を含むレスポンスモデル
+
+    Raises:
+        HTTPException: 
+            - ユーザーが存在しない場合に404 Not Foundエラーを返します
+            - 認証されていない場合に401 Unauthorizedエラーを返します
     """
     user = await User.get_user_by_username(username)
     if not user:
@@ -110,16 +93,16 @@ async def read_user_by_username(
 
 @router.get("/", response_model=List[UserResponse])
 async def read_all_users(current_user: User=Depends(auth.get_current_user)) -> List[UserResponse]:
-    """
-    全てのユーザーの情報を取得します。
+    """全てのユーザーの情報を取得します。
 
     このエンドポイントは、全てのユーザーの情報を取得します。
     認証されたユーザーのみがアクセスできます。
 
-    Returns
-    -------
-    List[UserResponse]
-        取得した全てのユーザーの詳細を含むレスポンスモデル。
+    Args:
+        current_user (User): 現在認証されているユーザー
+
+    Returns:
+        List[UserResponse]: 取得した全てのユーザーの詳細を含むレスポンスモデル
     """
     users = await User.get_all_users()
     if not users:
@@ -132,28 +115,20 @@ async def update_user_me(
     user_in: UserUpdate,
     current_user: User = Depends(auth.get_current_user)
     ) -> UserResponse:
-    """
-    現在のユーザー情報を更新します。
+    """現在のユーザー情報を更新します。
 
     このエンドポイントは、現在認証されているユーザーの情報を更新します。
     管理者権限の変更はできません。
 
-    Parameters
-    ----------
-    user_in : UserUpdate
-        更新するユーザー情報。
-    current_user : User
-        現在認証されているユーザー。
+    Args:
+        user_in (UserUpdate): 更新するユーザー情報
+        current_user (User): 現在認証されているユーザー
 
-    Returns
-    -------
-    UserResponse
-        更新したユーザーの詳細を含むレスポンスモデル。
+    Returns:
+        UserResponse: 更新したユーザーの詳細を含むレスポンスモデル
 
-    Raises
-    ------
-    HTTPException
-        管理者権限の変更を試みた場合に403 Forbiddenエラーを返します。
+    Raises:
+        HTTPException: 管理者権限の変更を試みた場合に403 Forbiddenエラーを返します
     """
     # 管理者権限の変更を防ぐ
     if user_in.is_admin is not None and user_in.is_admin != current_user.is_admin:
@@ -173,31 +148,24 @@ async def update_user(
     user_in: UserUpdate,
     current_user: User = Depends(auth.get_current_user)
     ) -> UserResponse:
-    """
-    指定されたユーザーの情報を更新します。
+    """指定されたユーザーの情報を更新します。
 
     このエンドポイントは、指定されたユーザーの情報を更新します。
     管理者のみがアクセスできます。
 
-    Parameters
-    ----------
-    user_id : str
-        更新するユーザーのID。
-    user_in : UserUpdate
-        更新するユーザー情報。
-    current_user : User
-        現在認証されているユーザー。
+    Args:
+        user_id (str): 更新するユーザーのID
+        user_in (UserUpdate): 更新するユーザー情報
+        current_user (User): 現在認証されているユーザー
 
-    Returns
-    -------
-    UserResponse
-        更新したユーザーの詳細を含むレスポンスモデル。
+    Returns:
+        UserResponse: 更新したユーザーの詳細を含むレスポンスモデル
 
-    Raises
-    ------
-    HTTPException
-        - ユーザーが存在しない場合に404 Not Foundエラーを返します。
-        - 管理者でない場合に403 Forbiddenエラーを返します。
+    Raises:
+        HTTPException: 
+            - ユーザーが存在しない場合に404 Not Foundエラーを返します
+            - 管理者でない場合に403 Forbiddenエラーを返します
+            - 更新処理中にValueErrorが発生した場合に404エラーを返します
     """
     # 管理者権限チェック
     if not current_user.is_admin:
@@ -226,28 +194,23 @@ async def delete_user(
     user_id: str,
     current_user: User=Depends(auth.get_current_user)
     ) -> dict:
-    """
-    指定されたユーザーを論理削除します。
+    """指定されたユーザーを論理削除します。
 
     このエンドポイントは、指定されたユーザーを削除します。
     削除されたユーザーはデータベースから削除されず、deleted_atフィールドが更新されます。
     認証されたユーザーかつ管理者のみがアクセスできます。
 
-    Parameters
-    ----------
-    user_id : str
-        削除するユーザーのID。
+    Args:
+        user_id (str): 削除するユーザーのID
+        current_user (User): 現在認証されているユーザー
 
-    Returns
-    -------
-    dict
-        削除成功メッセージを含む辞書。
+    Returns:
+        dict: 削除成功メッセージを含む辞書
 
-    Raises
-    ------
-    HTTPException
-        - ユーザーが存在しない場合に404 Not Foundエラーを返します。
-        - 管理者でない場合に403 Forbiddenエラーを返します。
+    Raises:
+        HTTPException: 
+            - ユーザーが存在しない場合に404 Not Foundエラーを返します
+            - 管理者でない場合に403 Forbiddenエラーを返します
     """
     # ユーザー存在チェック
     user = await User.get_user_by_id(user_id)
@@ -270,28 +233,23 @@ async def delete_user_permanently(
     user_id: str,
     current_user: User=Depends(auth.get_current_user)
     ) -> dict:
-    """
-    指定されたユーザーを物理削除します。
+    """指定されたユーザーを物理削除します。
 
     このエンドポイントは、指定されたユーザーを物理削除します。
     削除されたユーザーは復元できません。
     認証されたユーザーかつ管理者のみがアクセスできます。
 
-    Parameters
-    ----------
-    user_id : str
-        削除するユーザーのID。
+    Args:
+        user_id (str): 削除するユーザーのID
+        current_user (User): 現在認証されているユーザー
 
-    Returns
-    -------
-    dict
-        削除成功メッセージを含む辞書。
+    Returns:
+        dict: 削除成功メッセージを含む辞書
 
-    Raises
-    ------
-    HTTPException
-        - ユーザーが存在しない場合に404 Not Foundエラーを返します。
-        - 管理者でない場合に403 Forbiddenエラーを返します。
+    Raises:
+        HTTPException: 
+            - ユーザーが存在しない場合に404 Not Foundエラーを返します
+            - 管理者でない場合に403 Forbiddenエラーを返します
     """
     # ユーザー存在チェック
     user = await User.get_user_by_id(user_id)

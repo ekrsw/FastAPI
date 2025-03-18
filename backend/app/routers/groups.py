@@ -18,6 +18,18 @@ async def create_group(
     group_in: GroupCreate,
     current_user: User=Depends(auth.get_current_user)
     ) -> GroupSchema:
+    """新しいグループを作成します。
+
+    このエンドポイントは、提供されたグループ情報を基に新しいグループをデータベースに作成します。
+    認証されたユーザーのみがアクセスできます。
+
+    Args:
+        group_in (GroupCreate): 作成するグループの情報
+        current_user (User): 現在認証されているユーザー
+
+    Returns:
+        GroupSchema: 作成したグループの詳細を含むレスポンスモデル（データベースにはまだcommitされていない状態）
+    """
     new_group = await Group.from_schema(schema=group_in)
     return new_group
 
@@ -26,6 +38,21 @@ async def read_group_by_id(
     group_id: int,
     current_user: User=Depends(auth.get_current_user)
     ) -> GroupSchema:
+    """指定されたグループの情報を取得します。
+
+    このエンドポイントは、指定されたIDのグループ情報を取得します。
+    認証されたユーザーのみがアクセスできます。
+
+    Args:
+        group_id (int): 取得するグループのID
+        current_user (User): 現在認証されているユーザー
+
+    Returns:
+        GroupSchema: 取得したグループの詳細を含むレスポンスモデル
+
+    Raises:
+        HTTPException: グループが存在しない場合に404 Not Foundエラーを返します
+    """
     group = await Group.get_group_by_id(group_id=group_id)
     if group is None:
         raise HTTPException(status_code=404, detail="Group not found")
@@ -35,6 +62,17 @@ async def read_group_by_id(
 async def read_all_groups(
     current_user: User=Depends(auth.get_current_user)
     ) -> List[GroupSchema]:
+    """全てのグループの情報を取得します。
+
+    このエンドポイントは、全てのグループの情報を取得します。
+    認証されたユーザーのみがアクセスできます。
+
+    Args:
+        current_user (User): 現在認証されているユーザー
+
+    Returns:
+        List[GroupSchema]: 取得した全てのグループの詳細を含むレスポンスモデルのリスト
+    """
     groups = await Group.get_all_groups()
     if not groups:
         groups = []
@@ -46,6 +84,25 @@ async def update_group(
     group_in: GroupCreate,
     current_user: User=Depends(auth.get_current_user)
     ) -> GroupSchema:
+    """指定されたグループの情報を更新します。
+
+    このエンドポイントは、指定されたIDのグループ情報を更新します。
+    認証されたユーザーのみがアクセスできます。
+    管理者権限のチェックは行われません。
+
+    Args:
+        group_id (int): 更新するグループのID
+        group_in (GroupCreate): 更新するグループ情報
+        current_user (User): 現在認証されているユーザー
+
+    Returns:
+        GroupSchema: 更新したグループの詳細を含むレスポンスモデル
+
+    Raises:
+        HTTPException: 
+            - グループが存在しない場合に404 Not Foundエラーを返します
+            - 更新処理中にValueErrorが発生した場合に404エラーを返します
+    """
     group = await Group.get_group_by_id(group_id=group_id)
     if group is None:
         raise HTTPException(status_code=404, detail="Group not found")
@@ -60,7 +117,24 @@ async def update_group(
 async def delete_group(
     group_id: int,
     current_user: User=Depends(auth.get_current_user)
-    ):
+    ) -> dict:
+    """指定されたグループを削除します。
+
+    このエンドポイントは、指定されたIDのグループを物理削除します。
+    認証されたユーザーかつ管理者のみがアクセスできます。
+
+    Args:
+        group_id (int): 削除するグループのID
+        current_user (User): 現在認証されているユーザー
+
+    Returns:
+        dict: 削除成功メッセージを含む辞書
+
+    Raises:
+        HTTPException: 
+            - グループが存在しない場合に404 Not Foundエラーを返します
+            - 管理者でない場合に403 Forbiddenエラーを返します
+    """
     # グループ存在チェック
     group = await Group.get_group_by_id(group_id=group_id)
     if group is None:
