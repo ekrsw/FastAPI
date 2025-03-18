@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Type
 
 from pydantic import BaseModel
-from sqlalchemy import Integer, String
+from sqlalchemy import Integer, String, Select
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import ModelBaseMixinWithoutDeletedAt, T
@@ -30,14 +30,16 @@ class Group(ModelBaseMixinWithoutDeletedAt):
     async def get_all_groups(cls: Type[T]) -> List[T]:
         """全てのグループを取得する"""
         async with AsyncContextManager() as session:
-            groups = await session.query(cls).all()
+            result = await session.execute(Select(cls))
+            groups = result.scalars().all()
         return groups
     
     @classmethod
-    async def get_user_by_id(cls: Type[T], group_id: int) -> T:
+    async def get_group_by_id(cls: Type[T], group_id: int) -> T:
         """IDによるグループ取得"""
         async with AsyncContextManager() as session:
-            group = await session.query(cls).filter(cls.id == group_id).first()
+            result = await session.execute(Select(cls)).where(cls.id == group_id)
+            group = result.scalars().first()
         return group
     
     @classmethod

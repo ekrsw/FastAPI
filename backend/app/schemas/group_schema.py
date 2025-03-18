@@ -6,3 +6,6 @@ class GroupCreate(BaseModel):
 class GroupSchema(BaseModel):
     id: int
     groupname: str
+    
+    class Config:
+        from_attributes = True
