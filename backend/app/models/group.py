@@ -58,7 +58,7 @@ class Group(ModelBaseMixinWithoutDeletedAt):
     async def delete_group_permanently(cls: Type[T], group_id: int) -> None:
         """グループの物理削除"""
         async with AsyncContextManager() as session:
-            group = await cls.get_user_by_id(group_id)
+            group = await cls.get_group_by_id(group_id)
             session.delete(group)
             await session.commit()
     
