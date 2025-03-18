@@ -225,7 +225,7 @@ async def test_duplicate_group_creation():
 @pytest.mark.asyncio
 async def test_group_not_found():
     """存在しないグループの操作テスト"""
-    non_existent_id = 99999
+    non_existent_id = f"test_non_existent_group{uuid.uuid4()}"
     
     # 存在しないIDでのグループ取得
     non_existent_group = await Group.get_group_by_id(non_existent_id)

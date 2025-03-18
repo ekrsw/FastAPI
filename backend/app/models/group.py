@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Type, Optional
 from pydantic import BaseModel
 from sqlalchemy import Integer, String, Select
 from sqlalchemy.orm import Mapped, mapped_column
+from ulid import new as ulid_new
 
 from .base import ModelBaseMixinWithoutDeletedAt, T
 from app.db.session import AsyncContextManager
@@ -10,6 +11,7 @@ from app.db.session import AsyncContextManager
 
 class Group(ModelBaseMixinWithoutDeletedAt):
     __tablename__ = "groups"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: f"group_{str(ulid_new())}")
     groupname: Mapped[str] = mapped_column(String, nullable=False)
 
     def __repr__(self):

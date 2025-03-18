@@ -5,7 +5,6 @@ from sqlalchemy import event, Integer, DateTime, orm, String
 from sqlalchemy.orm import Mapped, mapped_column, Session
 from sqlalchemy.sql import func
 from typing import TypeVar
-from ulid import new as ulid_new
 
 from app.db.database import Base
 
@@ -14,14 +13,12 @@ T = TypeVar('T', bound='BaseDatabase')
 
 class ModelBaseMixin(Base):
     __abstract__ = True
-    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(ulid_new()))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
     deleted_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
 class ModelBaseMixinWithoutDeletedAt(Base):
     __abstract__ = True
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 

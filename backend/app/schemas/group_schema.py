@@ -16,6 +16,6 @@ class GroupCreate(GroupBase):
     pass
 
 class GroupSchema(GroupBase):
-    id: int
+    id: str
     
     model_config = ConfigDict(from_attributes=True)

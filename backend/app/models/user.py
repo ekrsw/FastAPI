@@ -3,9 +3,10 @@ from passlib.context import CryptContext
 
 from pydantic import BaseModel
 from typing import Optional
-from sqlalchemy import Boolean, String, Select
+from sqlalchemy import Boolean, ForeignKey, String, Select
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
+from ulid import new as ulid_new
 
 from .base import ModelBaseMixin, T
 from app.db.session import AsyncContextManager
@@ -16,6 +17,7 @@ pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 class User(ModelBaseMixin):
     __tablename__ = "users"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: f"user_{str(ulid_new())}")
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

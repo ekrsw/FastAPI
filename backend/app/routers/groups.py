@@ -35,7 +35,7 @@ async def create_group(
 
 @router.get("/{group_id}", response_model=GroupSchema)
 async def read_group_by_id(
-    group_id: int,
+    group_id: str,
     current_user: User=Depends(auth.get_current_user)
     ) -> GroupSchema:
     """指定されたグループの情報を取得します。
@@ -44,7 +44,7 @@ async def read_group_by_id(
     認証されたユーザーのみがアクセスできます。
 
     Args:
-        group_id (int): 取得するグループのID
+        group_id (str): 取得するグループのID
         current_user (User): 現在認証されているユーザー
 
     Returns:
@@ -80,7 +80,7 @@ async def read_all_groups(
 
 @router.put("/{group_id}", response_model=GroupSchema)
 async def update_group(
-    group_id: int,
+    group_id: str,
     group_in: GroupCreate,
     current_user: User=Depends(auth.get_current_user)
     ) -> GroupSchema:
@@ -115,7 +115,7 @@ async def update_group(
 
 @router.delete("/{group_id}")
 async def delete_group(
-    group_id: int,
+    group_id: str,
     current_user: User=Depends(auth.get_current_user)
     ) -> dict:
     """指定されたグループを削除します。
