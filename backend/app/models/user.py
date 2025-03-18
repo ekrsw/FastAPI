@@ -21,7 +21,7 @@ class User(ModelBaseMixin):
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    group_id: Mapped[Optional[str]] = mapped_column(Integer, ForeignKey("groups.id", ondelete="SET NULL"), nullable=True)
+    group_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("groups.id", ondelete="SET NULL"), nullable=True)
     # ここにフィールドを追加
 
     group = relationship("Group", back_populates="operators")
