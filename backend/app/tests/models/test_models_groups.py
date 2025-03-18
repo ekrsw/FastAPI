@@ -179,3 +179,218 @@ async def test_update_from_schema_edge_cases():
     update_schema = GroupCreate(groupname="test")
     with pytest.raises(ValueError, match="Group not found"):
         await Group.update_from_schema(db_obj=None, schema=update_schema)
+
+
+@pytest.mark.asyncio
+async def test_group_name_validation():
+    """グループ名のバリデーションテスト"""
+    # 2文字のgroupname（エラー）
+    with pytest.raises(ValueError, match="groupname must be between 3 and 100 characters"):
+        await Group.create_group(obj_in={"groupname": "ab"})
+    
+    # 101文字のgroupname（エラー）
+    long_name = "a" * 101
+    with pytest.raises(ValueError, match="groupname must be between 3 and 100 characters"):
+        await Group.create_group(obj_in={"groupname": long_name})
+    
+    # 空白のみのgroupname（エラー）
+    with pytest.raises(ValueError, match="groupname must not be empty"):
+        await Group.create_group(obj_in={"groupname": "   "})
+    
+    # 特殊文字を含むgroupname（正常系）
+    special_name = "Test-Group_123!@#"
+    group = await Group.create_group(obj_in={"groupname": special_name})
+    assert group.groupname == special_name
+
+
+@pytest.mark.asyncio
+async def test_duplicate_group_creation():
+    """重複するグループ名での作成テスト"""
+    groupname = f"test_duplicate_{uuid.uuid4()}"
+    
+    # 1回目の作成（成功）
+    group1 = await Group.create_group(obj_in={"groupname": groupname})
+    assert group1.groupname == groupname
+    
+    # 2回目の作成（同じgroupname）
+    group2 = await Group.create_group(obj_in={"groupname": groupname})
+    assert group2.groupname == groupname
+    assert group1.id != group2.id  # 異なるIDが割り当てられていることを確認
+
+
+@pytest.mark.asyncio
+async def test_group_not_found():
+    """存在しないグループの操作テスト"""
+    non_existent_id = 99999
+    
+    # 存在しないIDでのグループ取得
+    non_existent_group = await Group.get_group_by_id(non_existent_id)
+    assert non_existent_group is None
+    
+    # 存在しないグループの更新試行
+    with pytest.raises(AttributeError):
+        await Group.update_group(
+            db_obj=non_existent_group,
+            obj_in={"groupname": "updated"}
+        )
+    
+    # 存在しないグループの削除試行
+    # 注: 現在の実装では例外は発生しないが、将来的にはエラーハンドリングを追加することを推奨
+    await Group.delete_group_permanently(non_existent_id)
+
+
+@pytest.mark.asyncio
+async def test_group_transaction_rollback():
+    """トランザクションのロールバックテスト"""
+    # 正常なグループを作成
+    valid_group = await Group.create_group(obj_in={"groupname": f"valid_{uuid.uuid4()}"})
+    assert valid_group.id is not None
+
+    # トランザクション内でエラーを発生させる
+    async with AsyncContextManager() as session:
+        try:
+            # 既存のグループを作成
+            new_group = Group()
+            new_group.groupname = f"rollback_{uuid.uuid4()}"
+            session.add(new_group)
+            
+            # 意図的にエラーを発生させる（NULLでない列にNULLを設定）
+            new_group.groupname = None
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            
+    # ロールバック後、新しいグループが作成されていないことを確認
+    all_groups = await Group.get_all_groups()
+    new_group_exists = any(g.groupname == new_group.groupname for g in all_groups)
+    assert not new_group_exists, "ロールバックが正しく機能し、グループが作成されていないこと"
+
+    # 既存の有効なグループは影響を受けていないことを確認
+    valid_group_check = await Group.get_group_by_id(valid_group.id)
+    assert valid_group_check is not None, "既存の有効なグループが維持されていること"
+
+
+@pytest.mark.asyncio
+async def test_bulk_group_operations():
+    """一括操作のテスト"""
+    # 複数グループの一括作成
+    group_names = [f"bulk_{i}_{uuid.uuid4()}" for i in range(3)]
+    groups = []
+    
+    async with AsyncContextManager() as session:
+        for name in group_names:
+            new_group = Group()
+            new_group.groupname = name
+            session.add(new_group)
+            groups.append(new_group)
+        await session.commit()
+
+    # 作成されたグループを確認
+    for group in groups:
+        assert group.id is not None, "グループが正しく作成されていること"
+        
+    # 一括更新
+    new_names = [f"updated_{g.groupname}" for g in groups]
+    async with AsyncContextManager() as session:
+        for group, new_name in zip(groups, new_names):
+            group.groupname = new_name
+            session.add(group)
+        await session.commit()
+
+    # 更新を確認
+    updated_groups = await Group.get_all_groups()
+    for new_name in new_names:
+        assert any(g.groupname == new_name for g in updated_groups), "グループ名が更新されていること"
+
+    # 一括削除
+    async with AsyncContextManager() as session:
+        for group in groups:
+            await session.delete(group)
+        await session.commit()
+
+    # 削除を確認
+    final_groups = await Group.get_all_groups()
+    for new_name in new_names:
+        assert not any(g.groupname == new_name for g in final_groups), "グループが削除されていること"
+
+
+@pytest.mark.asyncio
+async def test_performance_large_data():
+    """大量データ処理のパフォーマンステスト"""
+    # 大量のグループを作成（テスト用に50件）
+    test_groups = []
+    async with AsyncContextManager() as session:
+        for i in range(50):
+            new_group = Group()
+            new_group.groupname = f"perf_test_{i}_{uuid.uuid4()}"
+            session.add(new_group)
+            test_groups.append(new_group)
+        await session.commit()
+
+    try:
+        # 全件取得のパフォーマンス確認
+        all_groups = await Group.get_all_groups()
+        assert len(all_groups) >= 50, "全てのテストグループが取得できていること"
+
+        # 個別取得のパフォーマンス確認
+        for group in test_groups[:5]:  # 最初の5件をサンプルとしてテスト
+            retrieved_group = await Group.get_group_by_id(group.id)
+            assert retrieved_group is not None, "個別のグループが取得できていること"
+            assert retrieved_group.id == group.id, "正しいグループが取得できていること"
+
+    finally:
+        # テストデータのクリーンアップ
+        async with AsyncContextManager() as session:
+            for group in test_groups:
+                await session.delete(group)
+            await session.commit()
+
+
+@pytest.mark.asyncio
+async def test_performance_pagination():
+    """ページネーション機能のテスト"""
+    # テストデータ作成（30件）
+    test_groups = []
+    async with AsyncContextManager() as session:
+        for i in range(30):
+            new_group = Group()
+            new_group.groupname = f"page_test_{i}_{uuid.uuid4()}"
+            session.add(new_group)
+            test_groups.append(new_group)
+        await session.commit()
+
+    try:
+        # ページネーションを使用してデータを取得
+        async with AsyncContextManager() as session:
+            # 1ページ目（10件）
+            stmt = select(Group).limit(10).offset(0)
+            result = await session.execute(stmt)
+            page1 = result.scalars().all()
+            assert len(page1) == 10, "1ページ目が10件取得できていること"
+
+            # 2ページ目（10件）
+            stmt = select(Group).limit(10).offset(10)
+            result = await session.execute(stmt)
+            page2 = result.scalars().all()
+            assert len(page2) == 10, "2ページ目が10件取得できていること"
+
+            # 3ページ目（10件）
+            stmt = select(Group).limit(10).offset(20)
+            result = await session.execute(stmt)
+            page3 = result.scalars().all()
+            assert len(page3) == 10, "3ページ目が10件取得できていること"
+
+            # ページ間で重複がないことを確認
+            page1_ids = {g.id for g in page1}
+            page2_ids = {g.id for g in page2}
+            page3_ids = {g.id for g in page3}
+            assert not (page1_ids & page2_ids), "1ページ目と2ページ目で重複がないこと"
+            assert not (page2_ids & page3_ids), "2ページ目と3ページ目で重複がないこと"
+            assert not (page1_ids & page3_ids), "1ページ目と3ページ目で重複がないこと"
+
+    finally:
+        # テストデータのクリーンアップ
+        async with AsyncContextManager() as session:
+            for group in test_groups:
+                await session.delete(group)
+            await session.commit()
