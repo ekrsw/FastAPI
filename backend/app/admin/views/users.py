@@ -24,12 +24,12 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     column_sortable_list = [User.id, User.username, User.is_admin, User.deleted_at]
     # フィルターの修正
     column_filters = [
-        "id",
-        "username",
-        "is_admin",
-        "deleted_at",
-        "created_at",
-        "updated_at"
+        User.id,
+        User.username,
+        User.is_admin,
+        User.deleted_at,
+        User.created_at,
+        User.updated_at
     ]
     # ここにフィールドを追加
     form_columns = [
