@@ -1,4 +1,4 @@
-services:
+services:    
   db:
     image: postgres:17.4-alpine
     container_name: test_db
@@ -21,11 +21,8 @@ services:
     # 既存プロジェクトとのポート競合を避けるためにポートフォワード
     ports:
       - "${DATABASE_PORT}:5432"
-    # DBの削除を容易にするためにプロジェクト内のディレクトリにデータを保存
-    volumes:
-      - ./backend/docker/postgresql/data:/var/lib/postgresql/data
     networks:
-      - test_network
+      - fastapi_network
     # リソース制限を追加
     deploy:
       resources:
@@ -35,4 +32,74 @@ services:
         reservations:
           cpus: '0.25'
           memory: 512M
-  
+
+  app:
+    container_name: test_app
+    build:
+      context: .
+      dockerfile: ./backend/docker/fastapi/Dockerfile
+    restart: always
+    env_file:
+      - .env.test
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://${DATABASE_USER}:${DATABASE_PASSWORD}@db:${DATABASE_PORT}/${DATABASE_NAME}"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_PORT}:8000"
+    expose:
+      - "${API_PORT}"
+    volumes:
+      - ./backend:/workdir
+      # ボリュームマウントの権限を設定
+      - /workdir/.pytest_cache
+    networks:
+      - fastapi_network
+    # リソース制限を追加
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  admin:
+    container_name: test_Admin
+    build:
+      context: .
+      dockerfile: ./backend/docker/admin/Dockerfile
+    restart: always
+    env_file:
+      - .env.test
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://${DATABASE_USER}:${DATABASE_PASSWORD}@db:${DATABASE_PORT}/${DATABASE_NAME}"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${ADMIN_PORT}:8000"
+    expose:
+      - "${ADMIN_PORT}"
+    volumes:
+      - ./backend:/workdir
+      # ボリュームマウントの権限を設定
+      - /workdir/.pytest_cache
+    networks:
+      - fastapi_network
+    # リソース制限を追加
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+networks:
+  fastapi_network:
+    name: fastapi_network
+    driver: bridge
