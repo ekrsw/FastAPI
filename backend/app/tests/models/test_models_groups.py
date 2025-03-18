@@ -186,20 +186,24 @@ async def test_group_name_validation():
     """グループ名のバリデーションテスト"""
     # 2文字のgroupname（エラー）
     with pytest.raises(ValueError, match="groupname must be between 3 and 100 characters"):
-        await Group.create_group(obj_in={"groupname": "ab"})
+        schema = GroupCreate(groupname="ab")
+        await Group.from_schema(schema=schema)
     
     # 101文字のgroupname（エラー）
     long_name = "a" * 101
     with pytest.raises(ValueError, match="groupname must be between 3 and 100 characters"):
-        await Group.create_group(obj_in={"groupname": long_name})
+        schema = GroupCreate(groupname=long_name)
+        await Group.from_schema(schema=schema)
     
     # 空白のみのgroupname（エラー）
     with pytest.raises(ValueError, match="groupname must not be empty"):
-        await Group.create_group(obj_in={"groupname": "   "})
+        schema = GroupCreate(groupname="   ")
+        await Group.from_schema(schema=schema)
     
     # 特殊文字を含むgroupname（正常系）
     special_name = "Test-Group_123!@#"
-    group = await Group.create_group(obj_in={"groupname": special_name})
+    schema = GroupCreate(groupname=special_name)
+    group = await Group.from_schema(schema=schema)
     assert group.groupname == special_name
 
 
@@ -228,11 +232,9 @@ async def test_group_not_found():
     assert non_existent_group is None
     
     # 存在しないグループの更新試行
-    with pytest.raises(AttributeError):
-        await Group.update_group(
-            db_obj=non_existent_group,
-            obj_in={"groupname": "updated"}
-        )
+    with pytest.raises(ValueError, match="Group not found"):
+        schema = GroupCreate(groupname="updated")
+        await Group.update_from_schema(db_obj=non_existent_group, schema=schema)
     
     # 存在しないグループの削除試行
     # 注: 現在の実装では例外は発生しないが、将来的にはエラーハンドリングを追加することを推奨

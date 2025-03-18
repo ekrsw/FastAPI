@@ -60,8 +60,9 @@ class Group(ModelBaseMixinWithoutDeletedAt):
         """グループの物理削除"""
         async with AsyncContextManager() as session:
             group = await cls.get_group_by_id(group_id)
-            await session.delete(group)
-            await session.commit()
+            if group is not None:
+                await session.delete(group)
+                await session.commit()
     
     @classmethod
     async def from_schema(cls: Type[T], *, schema: BaseModel) -> T:
