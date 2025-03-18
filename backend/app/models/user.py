@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any, Type, TypeVar, Union
+from typing import Any, Dict, Optional, List, Type, TypeVar, Union
 from passlib.context import CryptContext
 
 from pydantic import BaseModel
@@ -49,9 +49,7 @@ class User(ModelBaseMixin):
             for field, value in obj_data.items():
                 if hasattr(new_user, field):
                     setattr(new_user, field, value)
-            
             session.add(new_user)
-        
         return new_user
 
 
@@ -67,7 +65,7 @@ class User(ModelBaseMixin):
         return users
 
     @classmethod
-    async def get_user_by_id(cls: Type[T], user_id: str, include_deleted: bool = False):
+    async def get_user_by_id(cls: Type[T], user_id: str, include_deleted: bool = False) -> T:
         """ユーザーIDからユーザーを取得する
         
         Parameters

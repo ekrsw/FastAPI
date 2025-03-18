@@ -36,8 +36,8 @@ async def create_user(user_in: UserCreate) -> UserResponse:
         ユーザー名が既に存在する場合に400 Bad Requestエラーを返します。
     """
     # usernameで既存のユーザーを取得
-    exit_user = await User.get_user_by_username(username=user_in.username)
-    if exit_user:
+    exist_user = await User.get_user_by_username(username=user_in.username)
+    if exist_user:
         # 既存のユーザーが存在する場合はエラーを返す
         raise HTTPException(status_code=400, detail="Username already exists")
     new_user = await User.from_schema(schema=user_in)
