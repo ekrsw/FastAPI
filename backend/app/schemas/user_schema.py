@@ -5,6 +5,7 @@ from typing import List, Optional
 class UserBase(BaseModel):
     username: Optional[str] = None
     is_admin: Optional[bool] = False
+    group_id: Optional[str] = None
     # ここにフィールドを追加
 
     @field_validator("username")
@@ -24,6 +25,7 @@ class UserResponseBase(BaseModel):
     id: str
     username: str
     is_admin: bool
+    group_id: Optional[str] = None
     # ここにフィールドを追加
     
     model_config = ConfigDict(from_attributes=True)

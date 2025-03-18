@@ -16,17 +16,19 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.id,
         User.username,
         User.is_admin,
+        User.group_id,
         User.deleted_at,
         User.created_at,
         User.updated_at
         ]
     column_searchable_list = [User.id, User.username, User.is_admin]
-    column_sortable_list = [User.id, User.username, User.is_admin, User.deleted_at]
+    column_sortable_list = [User.id, User.username, User.is_admin, User.group_id, User.deleted_at]
     # フィルターの修正
     column_filters = [
         User.id,
         User.username,
         User.is_admin,
+        User.group_id,
         User.deleted_at,
         User.created_at,
         User.updated_at
@@ -36,6 +38,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.username,
         User.is_admin,
         User.hashed_password,
+        User.group_id,
         User.deleted_at
     ]
 
