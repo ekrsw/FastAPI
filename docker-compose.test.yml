@@ -9,21 +9,23 @@ services:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
+      TZ: ${TIME_ZONE}
+      PGTZ: ${TIME_ZONE}
     # DB起動完了までappコンテナの起動を待つための設定
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready --username=${DATABASE_USER} --dbname=${DATABASE_NAME}"]
-      interval: 3s
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 5s
+      retries: 5
+      start_period: 10s
     # 既存プロジェクトとのポート競合を避けるためにポートフォワード
     ports:
       - "${DATABASE_PORT}:5432"
     # DBの削除を容易にするためにプロジェクト内のディレクトリにデータを保存
     volumes:
-      - ./backend/docker/postgresql/data:/var/lib/postgresql/test_data
+      - ./backend/docker/postgresql/data:/var/lib/postgresql/data
     networks:
-      - fastapi_network
+      - test_network
     # リソース制限を追加
     deploy:
       resources:
@@ -33,3 +35,4 @@ services:
         reservations:
           cpus: '0.25'
           memory: 512M
+  
