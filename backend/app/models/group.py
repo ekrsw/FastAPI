@@ -38,7 +38,8 @@ class Group(ModelBaseMixinWithoutDeletedAt):
     async def get_group_by_id(cls: Type[T], group_id: int) -> T:
         """IDによるグループ取得"""
         async with AsyncContextManager() as session:
-            result = await session.execute(Select(cls)).where(cls.id == group_id)
+            stmt = Select(cls).where(cls.id == group_id)
+            result = await session.execute(stmt)
             group = result.scalars().first()
         return group
     
@@ -59,7 +60,7 @@ class Group(ModelBaseMixinWithoutDeletedAt):
         """グループの物理削除"""
         async with AsyncContextManager() as session:
             group = await cls.get_group_by_id(group_id)
-            session.delete(group)
+            await session.delete(group)
             await session.commit()
     
     @classmethod

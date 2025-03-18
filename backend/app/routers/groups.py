@@ -21,12 +21,12 @@ async def create_group(
     new_group = await Group.from_schema(schema=group_in)
     return new_group
 
-@router.get("/{group_id}", response_model=List[GroupSchema])
+@router.get("/{group_id}", response_model=GroupSchema)
 async def read_group_by_id(
     group_id: int,
     current_user: User=Depends(auth.get_current_user)
     ) -> GroupSchema:
-    group = await Group.get_user_by_id(group_id=group_id)
+    group = await Group.get_group_by_id(group_id=group_id)
     if group is None:
         raise HTTPException(status_code=404, detail="Group not found")
     return group
@@ -46,7 +46,7 @@ async def update_group(
     group_in: GroupCreate,
     current_user: User=Depends(auth.get_current_user)
     ) -> GroupSchema:
-    group = await Group.get_user_by_id(group_id=group_id)
+    group = await Group.get_group_by_id(group_id=group_id)
     if group is None:
         raise HTTPException(status_code=404, detail="Group not found")
     
@@ -62,7 +62,7 @@ async def delete_group(
     current_user: User=Depends(auth.get_current_user)
     ):
     # グループ存在チェック
-    group = await Group.get_user_by_id(group_id=group_id)
+    group = await Group.get_group_by_id(group_id=group_id)
     if group is None:
         raise HTTPException(status_code=404, detail="Group not found")
     

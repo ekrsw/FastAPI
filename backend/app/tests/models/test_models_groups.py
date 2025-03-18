@@ -7,11 +7,7 @@ from app.models.group import Group
 from app.schemas.group_schema import GroupCreate, GroupSchema
 from app.db.session import AsyncContextManager
 
-
-@pytest.fixture
-def unique_groupname():
-    """ユニークなグループ名を生成する"""
-    return f"group_{uuid.uuid4()}"
+from app.tests.conftest import unique_groupname
 
 
 @pytest_asyncio.fixture
@@ -86,7 +82,7 @@ async def test_update_group(test_group):
 
 
 @pytest.mark.asyncio
-async def test_update_group_edge_cases():
+async def test_update_group_edge_cases(unique_groupname):
     """グループ更新の特殊ケースを確認"""
     # 存在しないグループの更新を試みる
     # 注: 現在の実装ではエラーが発生しない可能性があるため、このテストはスキップします
@@ -106,11 +102,11 @@ async def test_update_group_edge_cases():
 
 
 @pytest.mark.asyncio
-async def test_delete_group_permanently():
+async def test_delete_group_permanently(unique_groupname):
     """物理削除が正しく動作するかを確認"""
     # 新しいグループを作成
     new_group = await Group.create_group(obj_in={
-        "groupname": f"delete_test_{uuid.uuid4()}"
+        "groupname": unique_groupname
     })
     group_id = new_group.id
     
@@ -121,19 +117,10 @@ async def test_delete_group_permanently():
     assert created_group is not None, "グループが作成されているか"
     
     # グループを物理削除
-    async with AsyncContextManager() as session:
-        # 最新の状態を取得
-        result = await session.execute(select(Group).where(Group.id == group_id))
-        group_to_delete = result.scalars().first()
-        # 削除
-        if group_to_delete:
-            session.delete(group_to_delete)
-            await session.commit()
+    await Group.delete_group_permanently(group_id)
     
     # 削除されたグループを取得しようとする
-    async with AsyncContextManager() as session:
-        result = await session.execute(select(Group).where(Group.id == group_id))
-        deleted_group = result.scalars().first()
+    deleted_group = await Group.get_group_by_id(group_id)
     
     assert deleted_group is None, "グループが完全に削除されているか"
 

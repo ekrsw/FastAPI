@@ -61,3 +61,8 @@ async def setup_database():
     # テスト後にテーブルを削除
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+@pytest.fixture
+def unique_groupname():
+    """ユニークなグループ名を生成する"""
+    return f"group_{uuid.uuid4()}"
