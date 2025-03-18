@@ -1,15 +1,17 @@
 from typing import Any, Dict, List, Type
 
 from pydantic import BaseModel
-from sqlalchemy import String
+from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import ModelBaseMixinWithoutDeletedAt, T
+from .base import T
+from app.db.database import Base
 from app.db.session import AsyncContextManager
 
 
-class Group(ModelBaseMixinWithoutDeletedAt):
+class Group(Base):
     __tablename__ = "groups"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     groupname: Mapped[str] = mapped_column(String, nullable=False)
 
     def __repr__(self):
@@ -34,7 +36,7 @@ class Group(ModelBaseMixinWithoutDeletedAt):
         return groups
     
     @classmethod
-    async def get_user_by_id(cls: Type[T], group_id: str) -> T:
+    async def get_user_by_id(cls: Type[T], group_id: int) -> T:
         """IDによるグループ取得"""
         async with AsyncContextManager() as session:
             group = await session.query(cls).filter(cls.id == group_id).first()
@@ -53,13 +55,20 @@ class Group(ModelBaseMixinWithoutDeletedAt):
         return db_obj
     
     @classmethod
-    async def delete_group_permanently(cls: Type[T], group_id: str) -> None:
+    async def delete_group_permanently(cls: Type[T], group_id: int) -> None:
         """グループの物理削除"""
         async with AsyncContextManager() as session:
             group = await cls.get_user_by_id(group_id)
             session.delete(group)
             await session.commit()
     
+    @classmethod
+    async def from_schema(cls: Type[T], *, schema: BaseModel) -> T:
+        """PydanticスキーマからGroupオブジェクトを作成"""
+        schema_dict = schema.model_dump()
+        return await cls.create_group(obj_in=schema_dict)
+
+
     @classmethod
     async def update_from_schema(cls: Type[T], *, db_obj: T, schema: BaseModel) -> T:
         """PydanticスキーマでGroupオブジェクトを更新"""

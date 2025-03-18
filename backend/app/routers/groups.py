@@ -1,6 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.core import auth
 from app.models.group import Group
+from app.models.user import User
+from app.schemas.group_schema import GroupSchema
 
 
 router = APIRouter(
@@ -9,10 +12,10 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-@router.post("/", response_model=GroupResponse)
-async def create_group(group_in: GroupCreate) -> GroupResponse:
-    # グループ名で既存のグループを取得
-    exist_group = await Group.get_group_by_groupname(groupname=group_in.groupname)
-    if exist_group:
-        #  既存のユーザーが存在する場合はエラーを返す
-        raise HTTPException(status_code=404, detail="Group already exists")
+@router.post("/", response_model=GroupSchema)
+async def create_group(
+    group_in: GroupSchema,
+    current_user: User=Depends(auth.get_current_user)
+    ) -> GroupSchema:
+    new_group = await Group.from_schema(schema=group_in)
+    return new_group
