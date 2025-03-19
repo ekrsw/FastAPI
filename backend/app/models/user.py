@@ -19,6 +19,7 @@ class User(ModelBaseMixin):
     __tablename__ = "users"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: f"user_{str(ulid_new())}")
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    fullname: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     group_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("groups.id", ondelete="SET NULL"), nullable=True)

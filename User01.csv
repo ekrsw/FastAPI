@@ -1,6 +1,6 @@
-username,is_admin,group_id,deleted_at
-test_user1,FALSE,group_01JPN2PR3R4MPWZXKTZ23KRCBD,
-test_user2,FALSE,group_01JPN2PR3R4MPWZXKTZ23KRCBD,
-test_user3,FALSE,group_01JPN2PR3R4MPWZXKTZ23KRCBD,
-test_user4,FALSE,group_01JPN2PR3R4MPWZXKTZ23KRCBD,
-test_user5,FALSE,group_01JPN2PR3R4MPWZXKTZ23KRCBD,
+username,fullname,is_admin,group_id,deleted_at
+test_user1,test_fullname1,FALSE,group_01JPN2PR3R4MPWZXKTZ23KRCBD,
+test_user2,test_fullname2,FALSE,group_01JPN2PR3R4MPWZXKTZ23KRCBD,
+test_user3,test_fullname3,FALSE,group_01JPN2PR3R4MPWZXKTZ23KRCBD,
+test_user4,test_fullname4,FALSE,group_01JPN2PR3R4MPWZXKTZ23KRCBD,
+test_user5,test_fullname5,FALSE,group_01JPN2PR3R4MPWZXKTZ23KRCBD,

@@ -15,18 +15,32 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     column_list = [
         User.id,
         User.username,
+        User.fullname,
         User.is_admin,
         User.group_id,
         User.deleted_at,
         User.created_at,
         User.updated_at
         ]
-    column_searchable_list = [User.id, User.username, User.is_admin]
-    column_sortable_list = [User.id, User.username, User.is_admin, User.group_id, User.deleted_at]
+    column_searchable_list = [
+        User.id,
+        User.username,
+        User.fullname,
+        User.is_admin
+        ]
+    column_sortable_list = [
+        User.id,
+        User.username,
+        User.fullname,
+        User.is_admin,
+        User.group_id,
+        User.deleted_at
+        ]
     
     # ここにフィールドを追加
     form_columns = [
         User.username,
+        User.fullname,
         User.is_admin,
         User.hashed_password,
         User.group_id,
@@ -37,6 +51,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     column_labels = {
         User.id: "ID",
         User.username: "ユーザー名",
+        User.fullname: "フルネーム",
         User.is_admin: "管理者",
         User.group_id: "グループID",
         User.deleted_at: "削除日時",
