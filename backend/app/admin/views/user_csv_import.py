@@ -1,7 +1,7 @@
 import csv
 import logging
 from io import StringIO
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 from fastapi import Request, UploadFile
 from fastapi.datastructures import UploadFile as FastAPIUploadFile  # 追加
@@ -19,6 +19,40 @@ class UserCsvImportAdminView(BaseView):  # type: ignore
     identity = "user_csv_import"
     methods = ["GET", "POST"]
 
+    # 固定フィールドの定義
+    REQUIRED_FIELDS = {
+        "username": str,
+        "password": str,
+        "is_admin": bool,
+        "group_id": str
+    }
+
+    # 除外フィールドの定義
+    EXCLUDED_FIELDS = {
+        "id", "hashed_password", "deleted_at",
+        "created_at", "updated_at", "group"
+    }
+
+    # 動的フィールド取得メソッド
+    def get_allowed_fields(self) -> dict:
+        return {
+            name: column.type.python_type
+            for name, column in User.__table__.columns.items()
+            if name not in self.EXCLUDED_FIELDS
+        }
+
+    # フィールド値のバリデーション
+    def validate_field_value(self, field: str, value: Any, field_type: type) -> Any:
+        if value is None or value == "":
+            return None
+        
+        try:
+            if field_type == bool:
+                return str(value).lower() == 'true'
+            return field_type(value)
+        except (ValueError, TypeError):
+            raise ValueError(f"{field}の値が不正です: {value}")
+
     async def process_csv_file(self, file: UploadFile) -> Tuple[int, int, List[str]]:
         """CSVファイルの処理
         
@@ -31,10 +65,8 @@ class UserCsvImportAdminView(BaseView):  # type: ignore
         success_count = 0
         error_count = 0
         error_descriptions = []
+        allowed_fields = self.get_allowed_fields()
 
-        logger.info(f"Processing file: {file.filename}")
-
-        # CSVファイルの内容を文字列として読み込み。
         content = await file.read()
         content_str = content.decode('utf-8')
         csv_file = StringIO(content_str)
@@ -42,41 +74,50 @@ class UserCsvImportAdminView(BaseView):  # type: ignore
 
         for row in reader:
             try:
-                # usernameの必須チェック
+                # 必須フィールドのチェック
                 if not row.get('username'):
                     error_count += 1
                     error_descriptions.append(f"行 {reader.line_num}: usernameは必須です")
                     continue
 
-                # is_adminの処理（デフォルトはFalse)
-                is_admin_str = row.get('is_admin', '').lower()
-                is_admin = is_admin_str == 'true'
+                # ユーザーデータの準備
+                user_data = {
+                    "username": row['username'],
+                    "password": DEFAULT_PASSWORD,
+                    "is_admin": str(row.get('is_admin', '')).lower() == 'true',
+                    "group_id": row.get('group_id')
+                }
+
+                # 動的フィールドの処理
+                for field, field_type in allowed_fields.items():
+                    if field not in self.REQUIRED_FIELDS and field in row:
+                        try:
+                            value = self.validate_field_value(field, row[field], field_type)
+                            if value is not None:
+                                user_data[field] = value
+                        except ValueError as e:
+                            error_count += 1
+                            error_descriptions.append(f"行 {reader.line_num}: {str(e)}")
+                            continue
 
                 # ユーザーの作成
-                username = row['username']
-                logger.info(f"Creating user: {username}")
                 try:
-                    # ここにフィールドを追加
-                    await User.create_user(obj_in={
-                        "username": username,
-                        "password": DEFAULT_PASSWORD,
-                        "is_admin": is_admin,
-                        "group_id": row['group_id']
-                    })
+                    await User.create_user(obj_in=user_data)
                     success_count += 1
-                    logger.info(f"Successfully created user: {username}")
+                    logger.info(f"Successfully created user: {user_data['username']}")
                 except Exception as e:
                     error_count += 1
-                    error_msg = f"行 {reader.line_num}: ユーザー '{username}' の作成に失敗しました - {str(e)}"
+                    error_msg = f"行 {reader.line_num}: ユーザー '{user_data['username']}' の作成に失敗しました - {str(e)}"
                     error_descriptions.append(error_msg)
                     logger.error(error_msg)
+
             except Exception as e:
                 error_count += 1
                 error_msg = f"行 {reader.line_num}: 予期せぬエラー - {str(e)}"
                 error_descriptions.append(error_msg)
                 logger.error(error_msg)
-            
-        return success_count, error_count, error_descriptions
+
+        return success_count, error_count, error_descriptions        
 
     @expose(f"/{identity}", methods=["GET", "POST"])
     async def user_csv_import(self, request: Request):
