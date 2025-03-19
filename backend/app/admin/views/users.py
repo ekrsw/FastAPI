@@ -17,13 +17,12 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.username,
         User.is_admin,
         User.group_id,
-        "group_name",  # 新しい仮想カラム
         User.deleted_at,
         User.created_at,
         User.updated_at
         ]
     column_searchable_list = [User.id, User.username, User.is_admin]
-    column_sortable_list = [User.id, User.username, User.is_admin, User.group_id, "group_name", User.deleted_at]
+    column_sortable_list = [User.id, User.username, User.is_admin, User.group_id, User.deleted_at]
     
     # ここにフィールドを追加
     form_columns = [
@@ -40,7 +39,6 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.username: "ユーザー名",
         User.is_admin: "管理者",
         User.group_id: "グループID",
-        "group_name": "グループ名",
         User.deleted_at: "削除日時",
         User.created_at: "作成日時",
         User.updated_at: "更新日時",
@@ -54,11 +52,6 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     form_args = {
         "render_kw": {"class": "form-control", "required": False},
         "validators": [wtforms.validators.Optional()],
-    }
-
-    # 仮想カラムのフォーマッタ
-    column_formatters = {
-        "groupname": lambda m, a: m.group_id if m.group_id else "-"
     }
 
     async def insert_model(self, request: Request, data: dict) -> Any:
@@ -86,3 +79,6 @@ class UserAdminView(ModelView, model=User):  # type: ignore
             # include_deleted=Trueを指定することで論理削除されたレコードも含めて出力する
             stmt = stmt.execution_options(include_deleted=True)
         return await super()._run_query(stmt)
+
+    form_include_pk = True
+
