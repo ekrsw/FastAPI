@@ -30,8 +30,14 @@ alembic upgrade head
 ### テスト
 
 ```
-cd app
+# テスト用コンテナを立ち上げる
+docker-compose -f docker-compose.test.yml up --build -d
+# テスト用コンテナに入る
+docker exec -it test_app /bin/bash
+# 全体をテストする
 python -m pytest -v
+# モジュールごとにテストする
+pytest -m pytest [テストしたいモジュールのパス] -v
 ```
 
 ```
