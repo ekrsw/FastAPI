@@ -16,8 +16,11 @@ class Group(ModelBaseMixinWithoutDeletedAt):
 
     operators = relationship("User", back_populates="group")
 
+    def __str__(self):
+        return self.groupname
+
     def __repr__(self):
-        return f"<Group {self.groupname}>"
+        return self.groupname
     
     @classmethod
     async def create_group(cls: Type[T], *, obj_in: Dict[str, Any]) -> T:

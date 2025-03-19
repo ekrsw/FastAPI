@@ -70,7 +70,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     async def get_group_choices(self) -> List[Tuple[str, str]]:
         """グループ選択肢を取得する"""
         groups = await Group.get_all_groups()
-        choices = [(group.id, group.groupname) for group in groups]
+        choices = [(str(group.id), str(group.groupname)) for group in groups]
         choices.insert(0, ("", "選択してください"))  # 空の選択肢を追加
         return choices
 
