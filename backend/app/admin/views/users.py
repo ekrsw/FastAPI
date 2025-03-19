@@ -17,7 +17,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.username,
         User.fullname,
         User.is_admin,
-        User.group_id,
+        "group.groupname",
         User.deleted_at,
         User.created_at,
         User.updated_at
@@ -33,7 +33,6 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.username,
         User.fullname,
         User.is_admin,
-        User.group_id,
         User.deleted_at
         ]
     
@@ -53,7 +52,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.username: "ユーザー名",
         User.fullname: "フルネーム",
         User.is_admin: "管理者",
-        User.group_id: "グループID",
+        "group.groupname": "グループ名",
         User.deleted_at: "削除日時",
         User.created_at: "作成日時",
         User.updated_at: "更新日時",
