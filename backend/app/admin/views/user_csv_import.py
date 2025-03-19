@@ -56,10 +56,12 @@ class UserCsvImportAdminView(BaseView):  # type: ignore
                 username = row['username']
                 logger.info(f"Creating user: {username}")
                 try:
+                    # ここにフィールドを追加
                     await User.create_user(obj_in={
                         "username": username,
                         "password": DEFAULT_PASSWORD,
-                        "is_admin": is_admin
+                        "is_admin": is_admin,
+                        "group_id": row['group_id']
                     })
                     success_count += 1
                     logger.info(f"Successfully created user: {username}")
