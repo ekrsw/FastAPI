@@ -17,22 +17,14 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.username,
         User.is_admin,
         User.group_id,
+        "group_name",  # 新しい仮想カラム
         User.deleted_at,
         User.created_at,
         User.updated_at
         ]
     column_searchable_list = [User.id, User.username, User.is_admin]
-    column_sortable_list = [User.id, User.username, User.is_admin, User.group_id, User.deleted_at]
-    # フィルターの修正
-    column_filters = [
-        User.id,
-        User.username,
-        User.is_admin,
-        User.group_id,
-        User.deleted_at,
-        User.created_at,
-        User.updated_at
-    ]
+    column_sortable_list = [User.id, User.username, User.is_admin, User.group_id, "group_name", User.deleted_at]
+    
     # ここにフィールドを追加
     form_columns = [
         User.username,
@@ -42,8 +34,18 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.deleted_at
     ]
 
-    # パスワードラベルの変更
-    column_labels = {User.hashed_password: "Password"}
+    # パスワードラベルの変更とその他のラベル
+    column_labels = {
+        User.id: "ID",
+        User.username: "ユーザー名",
+        User.is_admin: "管理者",
+        User.group_id: "グループID",
+        "group_name": "グループ名",
+        User.deleted_at: "削除日時",
+        User.created_at: "作成日時",
+        User.updated_at: "更新日時",
+        User.hashed_password: "Password"
+    }
 
     # フォームフィールドの上書き
     form_overrides = {"hashed_password": wtforms.PasswordField}
@@ -52,6 +54,11 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     form_args = {
         "render_kw": {"class": "form-control", "required": False},
         "validators": [wtforms.validators.Optional()],
+    }
+
+    # 仮想カラムのフォーマッタ
+    column_formatters = {
+        "groupname": lambda m, a: m.group_id if m.group_id else "-"
     }
 
     async def insert_model(self, request: Request, data: dict) -> Any:
