@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List, Tuple
 
 from sqladmin import ModelView
 from sqlalchemy import ClauseElement, Select
@@ -7,6 +7,7 @@ from wtforms.validators import ValidationError
 import wtforms
 
 from app.models.user import User
+from app.models.group import Group
 
 
 class UserAdminView(ModelView, model=User):  # type: ignore
@@ -42,7 +43,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.fullname,
         User.is_admin,
         User.hashed_password,
-        User.group_id,
+        "group",  # カスタムフィールド
         User.deleted_at
     ]
 
@@ -53,6 +54,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.fullname: "フルネーム",
         User.is_admin: "管理者",
         "group.groupname": "グループ名",
+        "group": "グループ",
         User.deleted_at: "削除日時",
         User.created_at: "作成日時",
         User.updated_at: "更新日時",
@@ -60,13 +62,38 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     }
 
     # フォームフィールドの上書き
-    form_overrides = {"hashed_password": wtforms.PasswordField}
+    form_overrides = {
+        "hashed_password": wtforms.PasswordField
+    }
 
     # 更新時にパスワードを変更なし（空）で保存できるようにする
+    async def get_group_choices(self) -> List[Tuple[str, str]]:
+        """グループ選択肢を取得する"""
+        groups = await Group.get_all_groups()
+        choices = [(group.id, group.groupname) for group in groups]
+        choices.insert(0, ("", "選択してください"))  # 空の選択肢を追加
+        return choices
+
     form_args = {
-        "render_kw": {"class": "form-control", "required": False},
-        "validators": [wtforms.validators.Optional()],
+        "hashed_password": {
+            "render_kw": {"class": "form-control", "required": False},
+            "validators": [wtforms.validators.Optional()],
+        }
     }
+
+    async def create_form(self, obj=None):
+        """フォーム作成時にグループ選択肢を設定"""
+        form = await super().create_form(obj)
+        choices = await self.get_group_choices()
+        form.group = wtforms.SelectField(
+            "グループ",
+            choices=choices,
+            coerce=str,
+            render_kw={"class": "form-control"}
+        )
+        if obj and obj.group_id:
+            form.group.data = obj.group_id
+        return form
 
     async def insert_model(self, request: Request, data: dict) -> Any:
         if not data["hashed_password"]:
@@ -74,11 +101,16 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         return await super().insert_model(request, data)
     
     async def on_model_change(self, data: dict[str, Any], model: Any, is_created: bool, request: Request) -> None:
+        """モデル変更時の処理"""
         if not is_created:
             if not data["hashed_password"]:
                 data["hashed_password"] = model.hashed_password
                 return
-        # ハッシュ処理
+
+        # グループIDの設定
+        data["group_id"] = data.pop("group", None)
+        
+        # パスワードのハッシュ化
         # Userクラスのset_passwordメソッドにてUserPasswordSchemaでValidationを行う
         data["hashed_password"] = await User.set_password(data["hashed_password"])
     
@@ -95,4 +127,3 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         return await super()._run_query(stmt)
 
     form_include_pk = True
-
