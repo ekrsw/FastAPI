@@ -34,6 +34,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.username,
         User.fullname,
         User.is_admin,
+        "group.groupname",
         User.deleted_at
         ]
     
