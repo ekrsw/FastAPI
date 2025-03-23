@@ -5,6 +5,8 @@ from typing import List, Optional
 class UserBase(BaseModel):
     username: Optional[str] = None
     fullname: Optional[str] = None
+    ctstagename: Optional[str] = None
+    sweetname: Optional[str] = None
     is_admin: Optional[bool] = False
     group_id: Optional[str] = None
     # ここにフィールドを追加

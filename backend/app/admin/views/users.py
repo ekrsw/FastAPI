@@ -14,9 +14,10 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     name_plural = "ユーザー"
     # ここにフィールドを追加
     column_list = [
-        User.id,
         User.username,
         User.fullname,
+        User.ctstagename,
+        User.sweetname,
         User.is_admin,
         "group.groupname",
         User.deleted_at,
@@ -33,6 +34,8 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.id,
         User.username,
         User.fullname,
+        User.ctstagename,
+        User.sweetname,
         User.is_admin,
         "group.groupname",
         User.deleted_at
@@ -42,6 +45,8 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     form_columns = [
         User.username,
         User.fullname,
+        User.ctstagename,
+        User.sweetname,
         User.is_admin,
         User.hashed_password,
         "group",  # カスタムフィールド
