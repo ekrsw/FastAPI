@@ -5,5 +5,9 @@ set -e
 HOST=${API_HOST:-"0.0.0.0"}
 PORT=${API_PORT:-"8000"}
 
+# データベースのマイグレーションを実行
+echo "Running migrations..."
+alembic upgrade head
+
 # ユーザーappuserとして実行
 exec su -s /bin/bash appuser -c "uvicorn app.main:app --host $HOST --port $PORT --workers 2"

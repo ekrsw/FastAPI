@@ -29,20 +29,16 @@ alembic upgrade head
 
 ### テスト
 
-```
-# テスト用コンテナを立ち上げる
-docker-compose -f docker-compose.test.yml up --build -d
-# テスト用コンテナに入る
-docker exec -it test_app /bin/bash
-# 全体をテストする
-python -m pytest -v
-# モジュールごとにテストする
-pytest -m pytest [テストしたいモジュールのパス] -v
-```
+スクリプトファイルに実行権限を付与
 
 ```
-docker-compose -f docker-compose.yml -f docker-compose.test.yml up --abort-on-container-exit
-pytest -m pytest [テストしたいモジュール]
+chmod +x backend/run_tests.sh
+```
+
+相対パスで実行
+
+```
+./backend/run_tests.sh
 ```
 
 #### マイグレーションファイルの作成
