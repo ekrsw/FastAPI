@@ -9,5 +9,8 @@ db.sqlite
 backend/docker/postgresql/data/*
 backend/docker/postgresql/test_data/*
 
+# マイグレーションファイル
+backend/migrations/versions/*
+
 # 環境設定
 .env
