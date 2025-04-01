@@ -18,6 +18,7 @@ pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 class User(ModelBaseMixin):
     __tablename__ = "users"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: f"user_{str(ulid_new())}")
+    emproyee_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     fullname: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     ctstagename: Mapped[Optional[str]] = mapped_column(String, nullable=True)

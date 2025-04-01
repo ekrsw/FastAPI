@@ -14,6 +14,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     name_plural = "ユーザー"
     # ここにフィールドを追加
     column_list = [
+        User.emproyee_number,
         User.username,
         User.fullname,
         User.ctstagename,
@@ -31,6 +32,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
         User.is_admin
         ]
     column_sortable_list = [
+        User.emproyee_number,
         User.id,
         User.username,
         User.fullname,
@@ -43,6 +45,7 @@ class UserAdminView(ModelView, model=User):  # type: ignore
     
     # ここにフィールドを追加
     form_columns = [
+        
         User.username,
         User.fullname,
         User.ctstagename,
