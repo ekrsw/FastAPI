@@ -26,7 +26,7 @@ class UserBase(BaseModel):
 
 class UserResponseBase(BaseModel):
     id: str
-    emproyee_number: Optional[int] = None
+    employee_id: Optional[int] = None
     username: str
     fullname: Optional[str] = None
     is_admin: bool
