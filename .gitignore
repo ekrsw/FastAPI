@@ -10,8 +10,8 @@ backend/docker/postgresql/data/*
 backend/docker/postgresql/test_data/*
 
 # マイグレーションファイル
-_backend/app/migrations/versions/*
-_!/backend/app/migrations/versions/.gitkeep
+backend/app/migrations/versions/*
+!/backend/app/migrations/versions/.gitkeep
 
 # 環境設定
 .env
